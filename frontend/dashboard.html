@@ -51,6 +51,11 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
     body {
       font-family: 'DM Sans', sans-serif;
       background: var(--bg);
@@ -63,13 +68,15 @@
     .navbar {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 16px 32px;
+      padding: clamp(10px, 2vw, 16px) clamp(12px, 4vw, 32px);
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky;
       top: 0;
       z-index: 100;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .logo {
       font-family: 'Syne', sans-serif;
@@ -103,7 +110,14 @@
     .btn-icon:hover { border-color: var(--accent); }
 
     /* MAIN CONTENT */
-    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+    /* clamp(min, preferred, max): padding shrinks on small screens,
+       grows on large ones, no fixed gutter wasting space on any device */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: clamp(12px, 4vw, 32px) clamp(10px, 3vw, 24px);
+      width: 100%;
+    }
 
     /* LOADING */
     .loading {
@@ -132,7 +146,7 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 20px;
+      padding: clamp(12px, 2.5vw, 20px);
       border-left: 4px solid var(--accent);
     }
     .stat-card h6 {
@@ -144,7 +158,7 @@
     }
    .stat-value {
   font-family: 'Syne', sans-serif;
-  font-size: 28px;
+  font-size: clamp(20px, 5vw, 28px);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -178,12 +192,12 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 24px;
+      padding: clamp(14px, 3vw, 24px);
       margin-bottom: 24px;
     }
     .Skip-card h4 {
       font-family: 'Syne', sans-serif;
-      font-size: 18px;
+      font-size: clamp(15px, 3.5vw, 18px);
       margin-bottom: 16px;
     }
     .Skip-controls {
@@ -200,7 +214,7 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
-      font-size: 15px;
+      font-size: 16px;
       outline: none;
       text-align: center;
     }
@@ -216,12 +230,12 @@
     .section-header {
       background: linear-gradient(135deg, #4361ee, #3a0ca3);
       color: white;
-      padding: 18px 24px;
+      padding: clamp(12px, 3vw, 18px) clamp(14px, 4vw, 24px);
       border-radius: 14px 14px 0 0;
     }
     .section-header h4 {
       font-family: 'Syne', sans-serif;
-      font-size: 16px;
+      font-size: clamp(14px, 3.5vw, 16px);
       margin-bottom: 4px;
     }
     .section-header p { font-size: 13px; opacity: 0.8; }
@@ -300,7 +314,7 @@
     }
     .month-stat-value {
       font-family: 'Syne', sans-serif;
-      font-size: 22px;
+      font-size: clamp(17px, 4vw, 22px);
       font-weight: 700;
     }
 
@@ -398,14 +412,44 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
+    /* ===== RESPONSIVE BREAKPOINTS =====
+       Most spacing/fonts already scale fluidly via clamp() above.
+       These breakpoints handle GRID COLUMN COUNTS (clamp can't do that)
+       and a few things that genuinely need to change shape, not just size. */
+
+    /* Tablets and small laptops */
+    @media (max-width: 1024px) {
+      .summary-grid { grid-template-columns: repeat(3, 1fr); }
+      .month-stats { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* Tablets / large phones (landscape) */
     @media (max-width: 768px) {
-      .skip-calendar-row {
-  grid-template-columns: 1fr !important;
- }
+      .skip-calendar-row { grid-template-columns: 1fr !important; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .month-stats { grid-template-columns: repeat(2, 1fr); }
+
+      .attendance-table th, .attendance-table td {
+        padding: clamp(4px, 1.5vw, 8px) clamp(3px, 1vw, 6px);
+        font-size: clamp(11px, 2.8vw, 14px);
+      }
+      .attendance-table td:first-child { padding-left: clamp(6px, 2vw, 16px); }
+
+      .summary-table th, .summary-table td {
+        padding: clamp(6px, 1.5vw, 10px) clamp(3px, 1vw, 6px);
+        font-size: clamp(11px, 2.8vw, 14px);
+      }
+    }
+
+    /* Small phones — stack everything to a single column */
+    @media (max-width: 480px) {
       .summary-grid { grid-template-columns: 1fr; }
       .month-stats { grid-template-columns: 1fr; }
-      .navbar { padding: 12px 16px; }
-      .container { padding: 16px; }
+
+      .logo { font-size: clamp(16px, 5vw, 20px); }
+      .roll-badge { font-size: clamp(10px, 2.5vw, 13px); padding: 4px 10px; }
+      .section-header h4 { font-size: clamp(14px, 3.5vw, 16px); }
+      .Skip-controls { gap: 10px; }
     }
     .theme-switch { cursor: pointer; }
 .switch-track {
@@ -566,7 +610,7 @@
       <h4>📅 Attendance Calendar</h4>
       <p style="color:var(--subtext); font-size:13px; margin-top:8px;">Visualize your attendance day by day on a calendar view</p>
     </div>
-    <button class="btn-refresh" onclick="window.location.href='calendar.html'"style="padding:12px 28px; font-size:15px;">
+    <button class="btn-refresh" onclick="window.location.href='../frontend/calendar.html'"style="padding:12px 28px; font-size:15px;">
       Open Calendar →
     </button>
   </div>
@@ -613,7 +657,7 @@
   </div> 
 
   <script>
-    const API = "https://nrcm-attendance-api.onrender.com";
+    const API = "http://127.0.0.1:8000";
     let attendanceData = null;
 
     // --- INIT ---
@@ -646,14 +690,11 @@
   box.style.display = box.style.display === 'none' ? 'block' : 'none';
 }
     // --- LOGOUT ---
-    function logout(reason = '') {
-  localStorage.removeItem('token');
-  localStorage.removeItem('roll');
-  if (reason) {
-    sessionStorage.setItem('logoutReason', reason);
-  }
-  window.location.href = 'index.html';
-}
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('roll');
+      window.location.href = 'index.html';
+    }
 
     // --- LOAD ATTENDANCE ---
     async function loadAttendance(force = false) {
@@ -666,7 +707,7 @@
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
 
-        if (res.status === 401) { logout('Your session expired. Please log in again.'); return; }
+        if (res.status === 401) { logout(); return; }
         if (!res.ok) throw new Error('Failed to fetch');
 
         const result = await res.json();
