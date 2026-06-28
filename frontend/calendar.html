@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NRCM AttendEase — Attendance Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root[data-theme="dark"] {
+      --bg: #0B0E14; --surface: #14181F; --surface-light: #1E232C;
+      --border: #2C3240; --border-light: #3A4050;
+      --text: #F0F4FA; --text-secondary: #9AA4B8;
+      --accent: #7B7EF0; --accent-glow: #7B7EF040;
+      --present: #2BD67B; --present-dim: #2BD67B20;
+      --absent: #FF5E6C; --absent-dim: #FF5E6C20;
+      --partial: #FFB443; --partial-dim: #FFB44320;
+      --holiday: #60A5FA; --holiday-dim: #60A5FA20;
+      --glass: rgba(20,24,31,0.8); --shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    :root[data-theme="light"] {
+      --bg: #F1F5F9; --surface: #FFFFFF; --surface-light: #F8FAFC;
+      --border: #E2E8F0; --border-light: #CBD5E1;
+      --text: #0F172A; --text-secondary: #475569;
+      --accent: #6366F1; --accent-glow: #6366F120;
+      --present: #10B981; --present-dim: #10B98120;
+      --absent: #EF4444; --absent-dim: #EF444420;
+      --partial: #F59E0B; --partial-dim: #F59E0B20;
+      --holiday: #3B82F6; --holiday-dim: #3B82F620;
+      --glass: rgba(255,255,255,0.9); --shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.5; -webkit-font-smoothing:antialiased; letter-spacing:-0.01em; }
+
+    /* NAVBAR */
+    .navbar { position:sticky; top:1rem; z-index:200; margin:1rem 1.5rem 0; border-radius:24px; background:var(--glass); backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px); border:1px solid var(--border-light); box-shadow:var(--shadow); overflow:hidden; }
+    .navbar-main { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; gap:1rem; flex-wrap:wrap; }
+    .navbar-left { display:flex; align-items:center; gap:1rem; }
+    .back-btn { background:var(--surface); border:1px solid var(--border); color:var(--text); padding:0.5rem 1.25rem; border-radius:30px; cursor:pointer; font-size:0.875rem; font-weight:500; font-family:'Inter',sans-serif; transition:all 0.2s ease; }
+    .back-btn:hover { border-color:var(--accent); transform:translateY(-1px); box-shadow:0 4px 12px var(--accent-glow); }
+    .navbar-title { font-size:1.1rem; font-weight:600; background:linear-gradient(135deg,#fff,var(--text-secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .navbar-stats { display:flex; align-items:center; gap:2rem; flex:1; justify-content:center; }
+    .stat-pill { display:flex; flex-direction:column; align-items:center; }
+    .stat-pill-label { font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; font-weight:500; }
+    .stat-pill-value { font-family:'JetBrains Mono',monospace; font-size:1.5rem; font-weight:600; line-height:1.2; transition:color 0.3s; font-variant-numeric:tabular-nums; color:var(--text-secondary); }
+    .stat-pill-value.safe { color:var(--present); }
+    .stat-pill-value.risk { color:var(--partial); }
+    .stat-pill-value.danger { color:var(--absent); }
+    .trend-arrow { font-size:0.875rem; font-family:'JetBrains Mono',monospace; font-weight:500; padding:0.25rem 0.75rem; background:var(--surface-light); border-radius:30px; border:1px solid var(--border); }
+    .status-badge { padding:0.25rem 1rem; border-radius:30px; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; transition:all 0.3s; text-transform:uppercase; }
+    .status-badge.safe { background:var(--present-dim); color:var(--present); border:1px solid var(--present); }
+    .status-badge.risk { background:var(--partial-dim); color:var(--partial); border:1px solid var(--partial); }
+    .status-badge.danger { background:var(--absent-dim); color:var(--absent); border:1px solid var(--absent); }
+    .status-badge.inactive { background:var(--surface-light); color:var(--text-secondary); border:1px solid var(--border); }
+    .navbar-right { display:flex; align-items:center; gap:0.75rem; }
+    .reset-btn { background:var(--absent-dim); border:1px solid var(--absent); color:var(--absent); padding:0.5rem 1.25rem; border-radius:30px; cursor:pointer; font-size:0.875rem; font-weight:500; font-family:'Inter',sans-serif; transition:all 0.2s; }
+    .reset-btn:hover { background:var(--absent); color:white; transform:translateY(-1px); box-shadow:0 4px 12px var(--absent-dim); }
+    .navbar-sub { padding:0.5rem 1.5rem 1rem; font-size:0.75rem; color:var(--text-secondary); text-align:center; border-top:1px solid var(--border-light); font-family:'JetBrains Mono',monospace; }
+
+    /* WARNING BANNER */
+    .warning-banner { background:linear-gradient(90deg,var(--absent-dim),#FF5E6C20,var(--absent-dim)); border-top:2px solid var(--absent); border-bottom:2px solid var(--absent); color:var(--absent); padding:1rem 1.5rem; font-size:0.95rem; font-weight:600; text-align:center; display:none; backdrop-filter:blur(8px); letter-spacing:0.3px; text-transform:uppercase; animation:pulseWarning 2s infinite; }
+    @keyframes pulseWarning { 0%,100%{opacity:1} 50%{opacity:0.8} }
+    .warning-banner.visible { display:block; }
+
+    /* THEME SWITCH */
+    .switch-track { width:56px; height:28px; background:var(--surface); border:1px solid var(--border); border-radius:30px; position:relative; display:flex; align-items:center; justify-content:space-between; padding:0 6px; cursor:pointer; overflow:hidden; }
+    .switch-icon { font-size:0.875rem; z-index:1; transition:transform 0.3s; }
+    .switch-thumb { position:absolute; width:22px; height:22px; background:var(--accent); border-radius:50%; top:2px; left:2px; transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+    [data-theme="dark"] .switch-thumb { transform:translateX(28px); }
+
+    /* CONTAINER */
+    .container { max-width:1000px; margin:0 auto; padding:2rem 1.5rem; position:relative; z-index:1; }
+
+    /* LEGEND */
+    .legend { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:2.5rem; padding:1rem 1.5rem; background:var(--surface); border:1px solid var(--border); border-radius:50px; box-shadow:var(--shadow); backdrop-filter:blur(8px); }
+    .legend-item { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; font-weight:500; color:var(--text-secondary); transition:transform 0.2s; }
+    .legend-item:hover { transform:translateY(-2px); }
+    .legend-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+
+    /* MONTH CARDS */
+    .months-wrapper { display:flex; flex-direction:column; gap:2rem; }
+    .month-card { background:var(--surface); border:1px solid var(--border); border-radius:32px; box-shadow:var(--shadow); transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); animation:cardEntrance 0.5s ease backwards; position:relative; }
+    .month-card:nth-child(1){animation-delay:0.1s} .month-card:nth-child(2){animation-delay:0.2s} .month-card:nth-child(3){animation-delay:0.3s} .month-card:nth-child(4){animation-delay:0.4s} .month-card:nth-child(5){animation-delay:0.5s}
+    @keyframes cardEntrance { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .month-card:hover { transform:translateY(-4px); box-shadow:0 20px 40px rgba(0,0,0,0.4); border-color:var(--accent); }
+    .month-header { padding:1.25rem 1.5rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:linear-gradient(90deg,var(--surface-light),transparent); border-radius:32px 32px 0 0; }
+    .month-name { font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; background:linear-gradient(135deg,var(--text),var(--text-secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .month-planned-tag { font-size:0.7rem; color:var(--accent); background:var(--accent-glow); border:1px solid var(--accent); padding:0.25rem 1rem; border-radius:30px; font-weight:600; letter-spacing:0.3px; }
+    .cal-grid { padding:1.5rem; }
+    .day-headers { display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:0.75rem; }
+    .day-header { text-align:center; font-size:0.7rem; font-weight:600; color:var(--text-secondary); padding:0.5rem 0; text-transform:uppercase; letter-spacing:0.5px; }
+    .day-header.sunday { color:var(--absent); }
+
+    /* WEEK ROWS — each row is its own grid so panel inserts between rows */
+    .dates-grid { display:flex; flex-direction:column; gap:0; padding:4px; }
+    .week-row { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+
+    /* DATE CELLS */
+    .date-cell { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; font-size:0.9rem; font-family:'JetBrains Mono',monospace; font-weight:600; cursor:default; transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1); border:2px solid transparent; user-select:none; margin:2px; position:relative; z-index:1; }
+    .date-cell:not(.empty):not(.sunday):not(.future-locked):not(.past-no-record):hover { transform:scale(1.08); z-index:10; }
+    .date-cell.empty { visibility:hidden; }
+    .date-cell.sunday { color:var(--text-secondary); opacity:0.3; border:1px solid var(--border); }
+    .date-cell.past-present { background:var(--present-dim); color:var(--present); border:1px solid var(--present); }
+    .date-cell.past-absent  { background:var(--absent-dim);  color:var(--absent);  border:1px solid var(--absent); }
+    .date-cell.past-partial { background:linear-gradient(135deg,var(--present-dim) 0%,var(--present-dim) 50%,var(--absent-dim) 50%,var(--absent-dim) 100%); color:var(--text); border:1px solid var(--border); }
+    .date-cell.past-no-record { color:var(--text-secondary); opacity:0.3; }
+    .date-cell.today-active { border:2px solid var(--accent)!important; cursor:pointer; color:var(--text); font-weight:700; box-shadow:0 0 0 4px var(--accent-glow); }
+    .date-cell.today-active:hover { background:var(--accent-glow); transform:scale(1.1); }
+    .date-cell.today-posted { border:2px solid var(--accent)!important; opacity:0.5; cursor:not-allowed; filter:grayscale(0.5); }
+    .date-cell.future-locked { color:var(--text-secondary); opacity:0.4; cursor:not-allowed; filter:grayscale(0.5); background-image:repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(128,128,128,0.1) 5px,rgba(128,128,128,0.1) 10px); }
+    .date-cell.future-unlocked { color:var(--text); opacity:0.9; cursor:pointer; border:1px dashed var(--border-light); background-image:radial-gradient(circle at 30% 30%,var(--accent-glow) 0%,transparent 70%); }
+    .date-cell.future-unlocked:hover { opacity:1; border-color:var(--accent); background:var(--accent-glow); }
+    .date-cell.future-locked::after,
+    .date-cell.future-unlocked::after { font-size:0.6rem; position:absolute; bottom:2px; right:2px; opacity:0.7; transition:all 0.3s ease; pointer-events:none; z-index:2; }
+    .date-cell.future-locked::after { content:"🔒"; }
+    .date-cell.future-unlocked::after { content:"🔓"; color:var(--accent); }
+    .date-cell.future-locked:hover::after { transform:scale(1.2); opacity:1; }
+    .date-cell.future-unlocked:hover::after { transform:scale(1.2) rotate(10deg); opacity:1; }
+    @keyframes unlockPop { 0%{transform:scale(1);opacity:0.4;filter:grayscale(0.5)} 50%{transform:scale(1.1);opacity:1;filter:grayscale(0)} 100%{transform:scale(1);opacity:0.9;filter:grayscale(0)} }
+    .date-cell.just-unlocked { animation:unlockPop 0.4s ease; }
+    .date-cell.planned-present { background:var(--present); color:white; cursor:pointer; box-shadow:0 4px 12px var(--present-dim); border-color:var(--present); }
+    .date-cell.planned-absent  { background:var(--absent);  color:white; cursor:pointer; box-shadow:0 4px 12px var(--absent-dim);  border-color:var(--absent); }
+    .date-cell.planned-partial { background:var(--partial); color:white; cursor:pointer; box-shadow:0 4px 12px var(--partial-dim); border-color:var(--partial); }
+    .date-cell.planned-holiday { background:var(--holiday); color:white; cursor:pointer; box-shadow:0 4px 12px var(--holiday-dim); border-color:var(--holiday); }
+    .date-cell.today-ring { border:2px solid var(--accent)!important; box-shadow:0 0 0 4px var(--accent-glow); }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 60%{transform:translateX(5px)} }
+    .shake { animation:shake 0.3s ease; }
+
+    /* INLINE PANEL — inserts after the specific week-row containing clicked date */
+ .inline-panel {
+  padding:1.5rem;
+  background:var(--surface);
+  border:1px solid var(--accent);
+  border-radius:20px;
+  margin:10px 4px;
+  box-shadow:0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px var(--accent-glow);
+  backdrop-filter:blur(12px);
+  animation:panelPop 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;
+  z-index:200;
+}
+    /* caret arrow pointing up toward the clicked date */
+    .inline-panel::before { content:''; position:absolute; top:-8px; left:var(--caret-left, 50%); transform:translateX(-50%); width:14px; height:14px; background:var(--surface); border-top:1px solid var(--accent); border-left:1px solid var(--accent); border-radius:3px 0 0 0; transform:translateX(-50%) rotate(45deg); }
+    @keyframes panelPop { from{opacity:0;transform:translateY(-8px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+    /* PANEL HEADER with close btn */
+    .panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border); }
+    .panel-date-label { font-size:0.95rem; font-weight:600; color:var(--text); }
+    .panel-close-btn { width:28px; height:28px; border-radius:50%; border:1px solid var(--border); background:var(--surface-light); color:var(--text-secondary); font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; font-family:'Inter',sans-serif; flex-shrink:0; }
+    .panel-close-btn:hover { background:var(--absent); border-color:var(--absent); color:white; transform:scale(1.1); }
+
+    .panel-options { display:flex; gap:0.75rem; flex-wrap:wrap; }
+    .panel-opt { padding:0.6rem 1.25rem; border-radius:30px; border:1px solid var(--border); background:var(--surface-light); color:var(--text); font-size:0.85rem; font-weight:500; font-family:'Inter',sans-serif; cursor:pointer; transition:all 0.2s; }
+    .panel-opt:hover:not(:disabled) { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
+    .panel-opt.sel-present { background:var(--present); color:white; border-color:var(--present); box-shadow:0 4px 12px var(--present-dim); }
+    .panel-opt.sel-absent  { background:var(--absent);  color:white; border-color:var(--absent);  box-shadow:0 4px 12px var(--absent-dim); }
+    .panel-opt.sel-partial { background:var(--partial); color:white; border-color:var(--partial); box-shadow:0 4px 12px var(--partial-dim); }
+    .panel-opt.sel-holiday { background:var(--holiday); color:white; border-color:var(--holiday); box-shadow:0 4px 12px var(--holiday-dim); }
+
+    /* PERIOD SELECTOR */
+    .period-selector { margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border); }
+    .period-selector-label { font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1rem; font-weight:600; }
+    .period-3way { display:flex; margin-bottom:1rem; background:var(--surface-light); border:1px solid var(--border); border-radius:40px; overflow:hidden; width:fit-content; }
+    .p3btn { padding:0.5rem 1.25rem; font-size:0.8rem; border:none; background:transparent; color:var(--text-secondary); cursor:pointer; font-family:'Inter',sans-serif; font-weight:500; transition:all 0.2s; }
+    .p3btn:hover:not(:disabled) { background:var(--accent-glow); color:var(--accent); }
+    .p3btn.active { background:var(--accent); color:white; }
+    .p3btn:disabled { opacity:0.3; cursor:not-allowed; }
+    .periods-row { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.75rem; }
+    .period-btn { width:44px; height:44px; border-radius:30%; border:2px solid var(--border); background:var(--surface-light); color:var(--text-secondary); font-size:0.7rem; font-family:'JetBrains Mono',monospace; font-weight:600; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+    .period-btn:hover:not(.p-locked):not(.p-posted) { transform:scale(1.15); border-color:var(--accent); box-shadow:0 4px 12px var(--accent-glow); z-index:10; }
+    .period-btn.p-present { background:var(--present); border-color:var(--present); color:white; }
+    .period-btn.p-absent  { background:var(--absent);  border-color:var(--absent);  color:white; }
+    .period-btn.p-neutral { background:var(--surface); border-color:var(--border-light); color:var(--text); }
+    .period-btn.p-locked  { opacity:0.2; cursor:not-allowed; border-style:dashed; }
+    .period-btn.p-posted  { opacity:0.5; cursor:not-allowed; border-style:solid; filter:grayscale(0.6); }
+
+    /* TOAST */
+    .toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:var(--surface); border:1px solid var(--accent); color:var(--text); padding:0.75rem 2rem; border-radius:50px; font-size:0.9rem; font-weight:500; z-index:9999; opacity:0; transition:opacity 0.3s; pointer-events:none; white-space:nowrap; box-shadow:var(--shadow); backdrop-filter:blur(8px); }
+    .toast.show { opacity:1; }
+
+    @media (max-width:768px) {
+      .navbar { margin:0.5rem; top:0.5rem; border-radius:16px; }
+      .navbar-stats { gap:1rem; order:3; width:100%; justify-content:space-around; }
+      .stat-pill-value { font-size:1.25rem; }
+      .container { padding:1rem; }
+      .legend { border-radius:24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BLUR OVERLAY — clicking it closes panel -->
+
+  <nav class="navbar">
+    <div class="navbar-main">
+      <div class="navbar-left">
+        <button class="back-btn" onclick="window.location.href='dashboard.html'">← Back</button>
+        <span class="navbar-title">Attendance Planner</span>
+      </div>
+      <div class="navbar-stats">
+        <div class="stat-pill"><span class="stat-pill-label">Baseline</span><span class="stat-pill-value" id="navBaseline">—</span></div>
+        <div class="stat-pill"><span class="stat-pill-label">Projected</span><span class="stat-pill-value" id="navProjected">—</span></div>
+        <span class="trend-arrow" id="navTrend"></span>
+        <span class="status-badge inactive" id="navBadge">—</span>
+      </div>
+      <div class="navbar-right">
+        <button class="reset-btn" onclick="doReset()">✕ Reset</button>
+        <div class="switch-track" onclick="toggleTheme()"><span class="switch-icon">☀️</span><span class="switch-icon">🌙</span><div class="switch-thumb"></div></div>
+      </div>
+    </div>
+    <div class="navbar-sub" id="navLastUpdated">Last updated: —</div>
+    <div class="warning-banner" id="navWarning"></div>
+  </nav>
+
+  <div class="container">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--present)"></div>Present</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--absent)"></div>Absent</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--partial)"></div>Partial</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--holiday)"></div>Holiday</div>
+      <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,var(--present-dim) 50%,var(--absent-dim) 50%);border:1px solid var(--border)"></div>Past Partial</div>
+      <div class="legend-item"><div class="legend-dot" style="opacity:0.35;background:var(--text-secondary)"></div>No Record</div>
+      <div class="legend-item"><div class="legend-dot" style="background:transparent;border:2px solid var(--accent)"></div>Today</div>
+      <div class="legend-item"><div class="legend-dot" style="background:transparent;border:1px dashed var(--border)"></div>Plannable</div>
+    </div>
+    <div class="months-wrapper" id="monthsWrapper">
+      <div style="text-align:center;padding:60px;color:var(--text-secondary)">📅 Loading planner...</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = 'http://127.0.0.1:8000';
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const PERIODS = ['P1','P2','P3','P4','P5','P6'];
+    const USER_TARGET = 75;
+
+    let baselinePresent = 0, baselineTotal = 0;
+    let portalMap = {}, portalPeriodMap = {}, planMap = {}, periodPlan = {};
+    let todayISO = '', todayAllPosted = false, activePanelDate = null, hasInteracted = false;
+
+    window.onload = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) { window.location.href = 'index.html'; return; }
+      const now = new Date(); now.setHours(0,0,0,0);
+      todayISO = toISO(now);
+      await loadData();
+      document.addEventListener('click', e => {
+        if (!activePanelDate) return;
+        if (!e.target.closest('.inline-panel') && !e.target.closest('.date-cell') && !e.target.closest('.period-btn') && !e.target.closest('.p3btn')) closePanel();
+      });
+    };
+
+    async function loadData() {
+      try {
+        const res = await fetch(`${API}/attendance`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        if (res.status === 401) {
+  localStorage.removeItem('token');
+  localStorage.removeItem('roll');
+  sessionStorage.setItem('logoutReason', 'Your session expired. Please log in again.');
+  window.location.href = 'index.html';
+  return;
+}
+        const result = await res.json();
+
+        const sa = new Date(result.scraped_at);
+        document.getElementById('navLastUpdated').textContent = `Last updated: ${sa.toLocaleDateString('en-GB')} ${sa.toLocaleTimeString()}`;
+
+        baselinePresent = parseInt(result.data.semester_summary.total_present) || 0;
+        baselineTotal   = parseInt(result.data.semester_summary.total_classes)  || 0;
+
+        (result.data.date_wise_attendance || []).forEach(record => {
+          const parts = record.date.split(' ')[0].split('-');
+          const iso = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          const periods = record.periods || {};
+          portalPeriodMap[iso] = periods;
+          const vals = Object.values(periods);
+          const hasP = vals.some(v => v === 'P');
+          const hasA = vals.some(v => v === 'A');
+          portalMap[iso] = (hasP && hasA) ? 'partial' : hasA ? 'absent' : hasP ? 'present' : 'no-record';
+        });
+
+        const tp = portalPeriodMap[todayISO] || {};
+        const postedToday = Object.values(tp).filter(v => v === 'P' || v === 'A').length;
+        todayAllPosted = postedToday >= 6;
+
+        const bPct = pct(baselinePresent, baselineTotal);
+        document.getElementById('navBaseline').textContent  = bPct + '%';
+        document.getElementById('navProjected').textContent = bPct + '%';
+        renderCalendar();
+      } catch(e) {
+        console.error(e);
+        document.getElementById('monthsWrapper').innerHTML = `<div style="text-align:center;padding:60px;color:var(--absent)">❌ Failed to load. Is server running?</div>`;
+      }
+    }
+
+    function renderCalendar() {
+      const allDates = Object.keys(portalMap).sort();
+      if (!allDates.length) { document.getElementById('monthsWrapper').innerHTML = `<div style="text-align:center;padding:60px;color:var(--text-secondary)">No attendance recorded yet.</div>`; return; }
+      const semStart = new Date(allDates[0]);
+      const planEnd  = new Date(todayISO); planEnd.setMonth(planEnd.getMonth()+3);
+      let html = '';
+      let cur = new Date(semStart.getFullYear(), semStart.getMonth(), 1);
+      while (cur <= planEnd) { html += buildMonthHTML(cur.getFullYear(), cur.getMonth()); cur.setMonth(cur.getMonth()+1); }
+      document.getElementById('monthsWrapper').innerHTML = html;
+    }
+
+    function buildMonthHTML(year, month) {
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month+1, 0).getDate();
+      const prefix = `${year}-${String(month+1).padStart(2,'0')}`;
+      const plannedCnt = Object.keys(planMap).filter(d => d.startsWith(prefix)).length;
+      const tag = plannedCnt > 0 ? `<span class="month-planned-tag">${plannedCnt} planned</span>` : '';
+
+      // Build cells array
+      let allCells = [];
+      for (let i = 0; i < firstDay; i++) allCells.push(`<div class="date-cell empty"></div>`);
+      for (let d = 1; d <= daysInMonth; d++) allCells.push(buildCellHTML(`${prefix}-${String(d).padStart(2,'0')}`, new Date(year, month, d)));
+
+      // Chunk into week rows of 7
+      let weeksHTML = '';
+      for (let i = 0; i < allCells.length; i += 7) {
+        const rowCells = allCells.slice(i, i + 7);
+        while (rowCells.length < 7) rowCells.push(`<div class="date-cell empty"></div>`);
+        weeksHTML += `<div class="week-row">${rowCells.join('')}</div>`;
+      }
+
+      return `<div class="month-card" id="mc-${prefix}">
+        <div class="month-header"><span class="month-name">${MONTHS[month]} ${year}</span>${tag}</div>
+        <div class="cal-grid">
+          <div class="day-headers">${DAY_LABELS.map((l,i)=>`<div class="day-header ${i===0?'sunday':''}">${l}</div>`).join('')}</div>
+          <div class="dates-grid" id="dg-${prefix}">${weeksHTML}</div>
+        </div>
+      </div>`;
+    }
+
+    function buildCellHTML(iso, dateObj) {
+      const d = dateObj.getDate(), dow = dateObj.getDay();
+      const today = new Date(todayISO); today.setHours(0,0,0,0);
+      dateObj.setHours(0,0,0,0);
+      if (dow === 0) return `<div class="date-cell sunday" data-iso="${iso}">${d}</div>`;
+      if (dateObj < today) {
+        const s = portalMap[iso];
+        const cls = s==='present'?'past-present':s==='absent'?'past-absent':s==='partial'?'past-partial':'past-no-record';
+        return `<div class="date-cell ${cls}" data-iso="${iso}">${d}</div>`;
+      }
+      if (iso === todayISO) {
+        if (todayAllPosted) {
+          const s = portalMap[iso];
+          const cls = (s==='present'?'past-present':s==='absent'?'past-absent':s==='partial'?'past-partial':'past-no-record')+' today-posted';
+          return `<div class="date-cell ${cls}" data-iso="${iso}" title="All periods posted today">${d}</div>`;
+        }
+        if (planMap[iso]) return `<div class="date-cell planned-${planMap[iso]} today-ring" data-iso="${iso}" onclick="onCellClick('${iso}')">${d}</div>`;
+        return `<div class="date-cell today-active" data-iso="${iso}" onclick="onCellClick('${iso}')">${d}</div>`;
+      }
+      if (planMap[iso]) return `<div class="date-cell planned-${planMap[iso]}" data-iso="${iso}" onclick="onCellClick('${iso}')">${d}</div>`;
+      if (isUnlocked(iso)) return `<div class="date-cell future-unlocked" data-iso="${iso}" onclick="onCellClick('${iso}')">${d}</div>`;
+      return `<div class="date-cell future-locked" data-iso="${iso}" onclick="onLockedClick(this)">${d}</div>`;
+    }
+
+    function isUnlocked(iso) {
+      const target = new Date(iso); target.setHours(0,0,0,0);
+      let check = new Date(todayISO); check.setHours(0,0,0,0);
+      if (todayAllPosted) check.setDate(check.getDate()+1);
+      while (check < target) {
+        const cISO = toISO(check);
+        if (check.getDay() !== 0) {
+          if (!planMap[cISO]) return false;
+          if (planMap[cISO] === 'partial') {
+            const states = periodPlan[cISO] || {};
+            const portalPeriods = portalPeriodMap[cISO] || {};
+            const allCommitted = PERIODS.every(p => {
+              const isPosted = portalPeriods[p] === 'P' || portalPeriods[p] === 'A';
+              return isPosted || states[p] === 'present' || states[p] === 'absent';
+            });
+            if (!allCommitted) return false;
+          }
+        }
+        check.setDate(check.getDate()+1);
+      }
+      return true;
+    }
+
+    function onCellClick(iso) { if (activePanelDate === iso) { closePanel(); return; } closePanel(); openPanel(iso); }
+    function onLockedClick(el) { el.classList.add('shake'); setTimeout(()=>el.classList.remove('shake'),300); showToast('📅 Plan previous dates first!'); }
+
+    function openPanel(iso) {
+      activePanelDate = iso;
+
+      // Show blur overlay
+
+
+      const panel = document.createElement('div');
+      panel.className = 'inline-panel';
+      panel.id = `panel-${iso}`;
+      panel.innerHTML = buildPanelInner(iso);
+
+      const cell = document.querySelector(`[data-iso="${iso}"]`);
+      if (!cell) return;
+
+      // Insert after the week-row containing the clicked cell
+      const weekRow = cell.closest('.week-row');
+      if (weekRow) {
+        weekRow.insertAdjacentElement('afterend', panel);
+
+        // Position the caret arrow above the clicked cell
+        const cellRect = cell.getBoundingClientRect();
+        const panelParentRect = weekRow.parentElement.getBoundingClientRect();
+        const caretLeft = (cellRect.left - panelParentRect.left) + (cellRect.width / 2);
+        panel.style.setProperty('--caret-left', `${caretLeft}px`);
+      }
+    }
+
+    function buildPanelInner(iso) {
+      const cur = planMap[iso] || null;
+      const periodsHTML = (cur==='partial' && periodPlan[iso]) ? buildPeriodsHTML(iso) : '';
+      const portalPeriods = portalPeriodMap[iso] || {};
+      const postedCount = Object.values(portalPeriods).filter(v => v==='P' || v==='A').length;
+      const hasMidDay = postedCount > 0 && postedCount < 6;
+      const disabledAttr = hasMidDay ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : '';
+      const midDayNote = hasMidDay ? `<div style="font-size:11px;color:var(--partial);margin-bottom:10px;">⚠️ ${postedCount} periods already posted — only Partial allowed</div>` : '';
+      const isFuture = iso > todayISO;
+      const hasPlannedAfter = Object.keys(planMap).some(d => d > iso);
+      const showClear = isFuture && planMap[iso] && !hasPlannedAfter;
+      const clearBtn = showClear ? `<button id="clear-btn-${iso}" class="panel-opt" style="margin-top:10px;border-color:#ef444440;color:var(--absent);" onclick="clearThisDay('${iso}')">🗑️ Clear This Day</button>` : '';
+      return `
+        <div class="panel-header">
+          <span class="panel-date-label">📆 ${formatDateLabel(iso)}</span>
+          <button class="panel-close-btn" onclick="closePanel()" title="Close">✕</button>
+        </div>
+        ${midDayNote}
+        <div class="panel-options">
+          <button class="panel-opt ${cur==='present'?'sel-present':''}" ${disabledAttr} onclick="${hasMidDay?'':` selectFull('${iso}','present')`}">✅ Full Present</button>
+          <button class="panel-opt ${cur==='absent'?'sel-absent':''}"   ${disabledAttr} onclick="${hasMidDay?'':` selectFull('${iso}','absent')`}">❌ Full Absent</button>
+          <button class="panel-opt ${cur==='partial'?'sel-partial':''}" onclick="selectPartialOption('${iso}')">⚡ Partial</button>
+          <button class="panel-opt ${cur==='holiday'?'sel-holiday':''}" ${disabledAttr} onclick="${hasMidDay?'':` selectFull('${iso}','holiday')`}">🏖️ Holiday</button>
+        </div>
+        ${clearBtn}
+        ${periodsHTML}`;
+    }
+
+    function selectFull(iso, option) {
+      planMap[iso] = option; hasInteracted = true;
+      const panel = document.getElementById(`panel-${iso}`);
+      if (panel) {
+        const ps = panel.querySelector('.period-selector'); if (ps) ps.remove();
+        panel.querySelectorAll('.panel-opt:not(.clear-day-btn)').forEach(b => b.className='panel-opt');
+        const map = {present:'sel-present',absent:'sel-absent',holiday:'sel-holiday'};
+        panel.querySelectorAll('.panel-opt:not(.clear-day-btn)').forEach(b => { if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${option}'`)) b.classList.add(map[option]||''); });
+      }
+      updateCell(iso); updateMonthTag(iso); updateProjection(); refreshFutureCells(); refreshPanelButtons(iso);
+    }
+
+    function selectPartialOption(iso) {
+      const prev = planMap[iso];
+      planMap[iso] = 'partial'; hasInteracted = true;
+      if (!periodPlan[iso] && !prev) {
+        const portalPeriods = portalPeriodMap[iso] || {};
+        const states = { _fromFull: false };
+        let firstUnposted = -1;
+        PERIODS.forEach((p, i) => {
+          const portalVal = portalPeriods[p];
+          if (portalVal === 'P') { states[p] = 'present'; }
+          else if (portalVal === 'A') { states[p] = 'absent'; }
+          else { if (firstUnposted === -1) { states[p] = 'neutral'; firstUnposted = i; } else { states[p] = 'locked'; } }
+        });
+        if (firstUnposted === -1) states._fromFull = 'posted';
+        periodPlan[iso] = states;
+      } else if (prev==='present') {
+        periodPlan[iso] = { P1:'present', P2:'present', P3:'present', P4:'present', P5:'present', P6:'present', _fromFull:'present' };
+      } else if (prev==='absent') {
+        periodPlan[iso] = { P1:'absent', P2:'absent', P3:'absent', P4:'absent', P5:'absent', P6:'absent', _fromFull:'absent' };
+      } else if (periodPlan[iso]) {
+        periodPlan[iso]._fromFull = 'returning';
+      }
+      const panel = document.getElementById(`panel-${iso}`);
+      if (panel) {
+        panel.querySelectorAll('.panel-opt').forEach(b => b.className='panel-opt');
+        panel.querySelectorAll('.panel-opt').forEach(b => { if (b.getAttribute('onclick').includes("'partial'")) b.classList.add('sel-partial'); });
+        panel.querySelectorAll('.clear-day-btn').forEach(b => b.remove());
+        const ps = panel.querySelector('.period-selector');
+        if (ps) ps.outerHTML = buildPeriodsHTML(iso);
+        else panel.insertAdjacentHTML('beforeend', buildPeriodsHTML(iso));
+      }
+      updateCell(iso); updateMonthTag(iso);
+      const states = periodPlan[iso] || {};
+      const anyTouched = PERIODS.some(p => states[p]==='present' || states[p]==='absent');
+      if (anyTouched) updateProjection();
+      refreshFutureCells(); refreshPanelButtons(iso);
+    }
+
+    function refreshPanelButtons(iso) {
+      const panel = document.getElementById(`panel-${iso}`); if (!panel) return;
+      const isFuture = iso > todayISO;
+      const hasPlannedAfter = Object.keys(planMap).some(d => d > iso);
+      const showClear = isFuture && planMap[iso] && !hasPlannedAfter;
+      const existing = document.getElementById(`clear-btn-${iso}`);
+      if (existing) existing.remove();
+      if (showClear) {
+        panel.insertAdjacentHTML('beforeend', `<button id="clear-btn-${iso}" class="panel-opt" style="margin-top:10px;border-color:#ef444440;color:var(--absent);" onclick="clearThisDay('${iso}')">🗑️ Clear This Day</button>`);
+      }
+    }
+
+    function buildPeriodsHTML(iso) {
+      const states = periodPlan[iso]; if (!states) return '';
+      const dis = states._fromFull ? 'disabled' : '';
+      const portalPeriods = portalPeriodMap[iso] || {};
+      const btns = PERIODS.map(p => {
+        const s = states[p]||'locked';
+        const isPosted = portalPeriods[p] === 'P' || portalPeriods[p] === 'A';
+        const cl = (s!=='locked' && !isPosted) ? `onclick="togglePeriodBtn('${iso}','${p}')"` : '';
+        const title = isPosted ? 'title="Posted by college"' : '';
+        const extraCls = isPosted ? 'p-posted' : '';
+        return `<button class="period-btn p-${s} ${extraCls}" ${cl} ${title}>${p}</button>`;
+      }).join('');
+      return `<div class="period-selector" id="ps-${iso}">
+        <div class="period-selector-label">Select individual periods:</div>
+        <div class="period-3way">
+          <button class="p3btn" ${dis} onclick="setAllPeriods('${iso}','absent')">All Absent</button>
+          <button class="p3btn active" ${dis} onclick="setAllPeriods('${iso}','default')">Default</button>
+          <button class="p3btn" ${dis} onclick="setAllPeriods('${iso}','present')">All Present</button>
+        </div>
+        <div class="periods-row" id="pr-${iso}">${btns}</div>
+      </div>`;
+    }
+
+    function togglePeriodBtn(iso, period) {
+      const states = periodPlan[iso]; if (!states || states[period]==='locked') return;
+      states[period] = states[period]==='absent'?'present': states[period]==='present'?'absent':'present';
+      const idx = PERIODS.indexOf(period);
+      if (idx < 5 && states[PERIODS[idx+1]]==='locked') states[PERIODS[idx+1]]='neutral';
+      refreshPeriodRow(iso); updateCell(iso); updateProjection(); refreshFutureCells();
+    }
+
+    function setAllPeriods(iso, mode) {
+      const states = periodPlan[iso]; if (!states) return;
+      const portalPeriods = portalPeriodMap[iso] || {};
+      let firstUnposted = -1;
+      PERIODS.forEach((p, i) => {
+        const isPosted = portalPeriods[p]==='P' || portalPeriods[p]==='A';
+        if (isPosted) return;
+        if (mode==='present') { states[p]='present'; }
+        else if (mode==='absent') { states[p]='absent'; }
+        else { if (firstUnposted===-1){states[p]='neutral';firstUnposted=i;} else states[p]='locked'; }
+      });
+      const ps = document.getElementById(`ps-${iso}`);
+      if (ps) { ps.querySelectorAll('.p3btn').forEach(b => { b.classList.remove('active'); if (b.getAttribute('onclick').includes(`'${mode}'`)) b.classList.add('active'); }); }
+      refreshPeriodRow(iso); updateCell(iso); updateProjection(); refreshFutureCells();
+    }
+
+    function refreshPeriodRow(iso) {
+      const row = document.getElementById(`pr-${iso}`); if (!row) return;
+      const states = periodPlan[iso];
+      const portalPeriods = portalPeriodMap[iso] || {};
+      row.innerHTML = PERIODS.map(p => {
+        const s = states[p]||'locked';
+        const isPosted = portalPeriods[p]==='P' || portalPeriods[p]==='A';
+        const cl = (s!=='locked' && !isPosted) ? `onclick="togglePeriodBtn('${iso}','${p}')"` : '';
+        const extraCls = isPosted ? 'p-posted' : '';
+        const title = isPosted ? 'title="Posted by college"' : '';
+        return `<button class="period-btn p-${s} ${extraCls}" ${cl} ${title}>${p}</button>`;
+      }).join('');
+    }
+
+    function updateCell(iso) {
+      const cell = document.querySelector(`[data-iso="${iso}"]`); if (!cell) return;
+      const planned = planMap[iso];
+      cell.className = 'date-cell';
+      if (planned) {
+        let displayPlan = planned;
+        if (planned === 'partial' && periodPlan[iso]) {
+          const states = periodPlan[iso];
+          const touched = PERIODS.filter(p => states[p]==='present' || states[p]==='absent');
+          const allPresent = touched.length === 6 && touched.every(p => states[p]==='present');
+          const allAbsent  = touched.length === 6 && PERIODS.every(p => states[p]==='absent');
+          if (allPresent) displayPlan = 'present';
+          else if (allAbsent) displayPlan = 'absent';
+        }
+        cell.classList.add(`planned-${displayPlan}`);
+        if (iso===todayISO) cell.classList.add('today-ring');
+        cell.setAttribute('onclick',`onCellClick('${iso}')`);
+      } else {
+        if (iso===todayISO && !todayAllPosted) cell.classList.add('today-active');
+        else if (isUnlocked(iso)) cell.classList.add('future-unlocked');
+        else { cell.classList.add('future-locked'); cell.setAttribute('onclick',`onLockedClick(this)`); return; }
+        cell.setAttribute('onclick',`onCellClick('${iso}')`);
+      }
+    }
+
+    function refreshFutureCells() {
+      const today = new Date(todayISO); today.setHours(0,0,0,0);
+      document.querySelectorAll('.date-cell.future-locked,.date-cell.future-unlocked').forEach(cell => {
+        const iso = cell.getAttribute('data-iso'); if (!iso || planMap[iso]) return;
+        const d = new Date(iso); d.setHours(0,0,0,0); if (d <= today) return;
+        const wasLocked = cell.classList.contains('future-locked');
+        if (isUnlocked(iso)) {
+          cell.className='date-cell future-unlocked'; cell.setAttribute('onclick',`onCellClick('${iso}')`);
+          if (wasLocked) { cell.classList.add('just-unlocked'); setTimeout(()=>cell.classList.remove('just-unlocked'),500); }
+        } else {
+          cell.className='date-cell future-locked'; cell.setAttribute('onclick',`onLockedClick(this)`);
+        }
+      });
+    }
+
+    function updateMonthTag(iso) {
+      const prefix = iso.substring(0,7);
+      const cnt = Object.keys(planMap).filter(d=>d.startsWith(prefix)).length;
+      const card = document.getElementById(`mc-${prefix}`); if (!card) return;
+      let tag = card.querySelector('.month-planned-tag');
+      if (cnt>0) { if (!tag){tag=document.createElement('span');tag.className='month-planned-tag';card.querySelector('.month-header').appendChild(tag);} tag.textContent=`${cnt} planned`; }
+      else { if (tag) tag.remove(); }
+    }
+
+    function clearThisDay(iso) {
+      if (!confirm(`Clear plan for ${formatDateLabel(iso)}?`)) return;
+      delete planMap[iso]; delete periodPlan[iso];
+      closePanel(); updateCell(iso); updateMonthTag(iso); updateProjection(); refreshFutureCells();
+      showToast('🗑️ Day cleared!');
+    }
+
+    function closePanel() {
+      if (!activePanelDate) return;
+      const panel = document.getElementById(`panel-${activePanelDate}`); if (panel) panel.remove();
+      activePanelDate = null;
+    }
+
+    function doReset() {
+      if (!confirm('Reset all planned dates? This cannot be undone.')) return;
+      planMap={}; periodPlan={}; hasInteracted=false; activePanelDate=null;
+      const bPct = pct(baselinePresent, baselineTotal);
+      const projEl = document.getElementById('navProjected'); projEl.textContent=bPct+'%'; projEl.className='stat-pill-value';
+      document.getElementById('navTrend').innerHTML='';
+      const badge=document.getElementById('navBadge'); badge.className='status-badge inactive'; badge.textContent='—';
+      document.getElementById('navWarning').classList.remove('visible');
+      renderCalendar(); showToast('✅ All plans cleared!');
+    }
+
+    function updateProjection() {
+      if (!hasInteracted) return;
+      let projP=baselinePresent, projT=baselineTotal;
+      Object.entries(planMap).forEach(([iso,option]) => {
+        if (option==='present')     { projP+=6; projT+=6; }
+        else if (option==='absent') { projT+=6; }
+        else if (option==='partial') {
+          const states=periodPlan[iso]||{};
+          const portalPeriods=portalPeriodMap[iso]||{};
+          PERIODS.forEach(p => {
+            const isPosted = portalPeriods[p]==='P'||portalPeriods[p]==='A';
+            if (isPosted) return;
+            const s=states[p];
+            if (s==='present'){projP++;projT++;} else if (s==='absent'){projT++;}
+          });
+        }
+      });
+      const projPct=pctNum(projP,projT), basePct=pctNum(baselinePresent,baselineTotal), diff=projPct-basePct;
+      const projEl=document.getElementById('navProjected');
+      projEl.textContent=projPct.toFixed(2)+'%';
+      projEl.className=projPct>=USER_TARGET+5?'stat-pill-value safe':projPct>=USER_TARGET?'stat-pill-value risk':'stat-pill-value danger';
+      const sign=diff>0?'+':'', color=diff>0?'var(--present)':diff<0?'var(--absent)':'var(--text-secondary)', arrow=diff>0?'↑':diff<0?'↓':'→';
+      document.getElementById('navTrend').innerHTML=`<span style="color:${color};font-size:12px">${arrow} ${sign}${diff.toFixed(2)}%</span>`;
+      const badge=document.getElementById('navBadge');
+      if(projPct>=USER_TARGET+5){badge.className='status-badge safe';badge.textContent='SAFE';}
+      else if(projPct>=USER_TARGET){badge.className='status-badge risk';badge.textContent='RISK';}
+      else{badge.className='status-badge danger';badge.textContent='DANGER';}
+      const today=new Date(todayISO); today.setHours(0,0,0,0);
+      let remainingDays=0, countDay=new Date(today); countDay.setDate(countDay.getDate()+1);
+      const threeMonths=new Date(today); threeMonths.setMonth(threeMonths.getMonth()+3);
+      while(countDay<=threeMonths){if(countDay.getDay()!==0&&!planMap[toISO(countDay)])remainingDays++;countDay.setDate(countDay.getDate()+1);}
+      const maxPossible=pctNum(projP+remainingDays*6,projT+remainingDays*6);
+      const warn=document.getElementById('navWarning');
+      if(projPct<USER_TARGET&&maxPossible<USER_TARGET){warn.textContent=`⚠️ Even with perfect attendance, you cannot reach ${USER_TARGET}%. Contact your HOD immediately.`;warn.classList.add('visible');}
+      else warn.classList.remove('visible');
+    }
+
+    function toISO(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+    function pct(p,t){return t>0?((p/t)*100).toFixed(2):'0.00';}
+    function pctNum(p,t){return t>0?(p/t)*100:0;}
+    function formatDateLabel(iso){const[y,m,d]=iso.split('-');return `${parseInt(d)} ${MONTHS[parseInt(m)-1]} ${y}`;}
+    function toggleTheme(){const h=document.documentElement;h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');}
+    function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+  </script>
+</body>
+</html>

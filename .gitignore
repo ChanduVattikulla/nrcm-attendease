@@ -1,0 +1,22 @@
+# --- SECRETS — NEVER COMMIT THESE ---
+.env
+*.env
+backend/.env
+
+# --- PYTHON ---
+__pycache__/
+*.pyc
+*.pyo
+venv/
+backend/venv/
+*.egg-info/
+
+# --- DATA FILES (generated locally, not needed in repo) ---
+attendance_data.json
+server_log.txt
+
+# --- OS / EDITOR ---
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp

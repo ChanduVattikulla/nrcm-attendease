@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NRCM Attendance Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root[data-theme="dark"] {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #2a2a3a;
+      --border-rgb: 42, 42, 58;
+      --text: #f0f0f5;
+      --subtext: #8888aa;
+      --accent: #6c63ff;
+      --accent-hover: #857dff;
+      --success: #22c55e;
+      --error: #ef4444;
+      --card: #16161f;
+    }
+    :root[data-theme="light"] {
+      --bg: #f4f4f8;
+      --surface: #ffffff;
+      --border: #e0e0ee;
+      --border-rgb: 224, 224, 238;
+      --text: #0a0a0f;
+      --subtext: #666688;
+      --accent: #6c63ff;
+      --accent-hover: #5550dd;
+      --success: #16a34a;
+      --error: #dc2626;
+      --card: #ffffff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Enhanced Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 100;
+      cursor: pointer;
+    }
+
+    .switch-track {
+      width: 64px;
+      height: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .switch-track:hover {
+      border-color: var(--accent);
+      transform: scale(1.02);
+    }
+
+    .switch-icon {
+      font-size: 14px;
+      z-index: 1;
+      transition: transform 0.3s ease;
+    }
+
+    .switch-thumb {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 50%;
+      top: 3px;
+      left: 4px;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(108, 99, 255, 0.3);
+    }
+
+    [data-theme="dark"] .switch-thumb {
+      transform: translateX(32px);
+    }
+
+    [data-theme="dark"] .sun {
+      transform: rotate(90deg);
+      opacity: 0.7;
+    }
+
+    [data-theme="dark"] .moon {
+      transform: rotate(0);
+      opacity: 1;
+    }
+
+    .sun, .moon {
+      transition: all 0.3s ease;
+      opacity: 0.7;
+    }
+
+    [data-theme="light"] .sun {
+      opacity: 1;
+    }
+
+    [data-theme="light"] .moon {
+      opacity: 0.5;
+    }
+
+    /* Enhanced Card with Glassmorphism */
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(var(--border-rgb), 0.1);
+      border-radius: 32px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 440px;
+      animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(
+        circle at center,
+        rgba(108, 99, 255, 0.03) 0%,
+        transparent 50%
+      );
+      animation: rotate 20s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Enhanced Logo */
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+      text-align: center;
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .logo span {
+      color: var(--accent);
+      position: relative;
+      display: inline-block;
+      animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 20px rgba(108, 99, 255, 0); }
+      50% { text-shadow: 0 0 30px rgba(108, 99, 255, 0.3); }
+    }
+
+    .tagline {
+      color: var(--subtext);
+      font-size: 14px;
+      margin-bottom: 40px;
+      text-align: center;
+      letter-spacing: 0.3px;
+      position: relative;
+      padding-bottom: 16px;
+    }
+
+    .tagline::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      border-radius: 2px;
+    }
+
+    /* Premium Tabs */
+    .tabs {
+      display: flex;
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 6px;
+      margin-bottom: 32px;
+      border: 1px solid var(--border);
+      position: relative;
+      gap: 4px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 16px;
+      text-align: center;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--subtext);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      background: transparent;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.3px;
+    }
+
+    .tab::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(108, 99, 255, 0.1);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .tab:hover::before {
+      width: 200px;
+      height: 200px;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 8px 20px -8px var(--accent);
+    }
+
+    .tab.active:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Modern Form with Floating Labels */
+    .form-group {
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .form-group label {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--subtext);
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--surface);
+      padding: 0 4px;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .form-group.focused label,
+    .form-group.filled label {
+      top: 0;
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--card);
+    }
+
+    input {
+      width: 100%;
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 2px solid transparent;
+      border-radius: 16px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      outline: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    /* Placeholder hidden until focus */
+input::placeholder {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+input:focus::placeholder {
+  opacity: 1;
+}
+  /* Force autofill background to match theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+    input:hover {
+      border-color: var(--border);
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 8px 24px -8px var(--accent);
+      background: var(--card);
+    }
+
+    /* Premium Button with Ripple */
+    .btn {
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Syne', sans-serif;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top: 16px;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.5px;
+      box-shadow: 0 10px 20px -10px var(--accent);
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn:hover::after {
+      width: 300px;
+      height: 300px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 30px -12px var(--accent);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn.loading {
+      position: relative;
+      color: transparent;
+    }
+
+    .btn.loading::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Animated Message */
+    .message {
+      margin-top: 24px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      font-size: 14px;
+      display: none;
+      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      padding-left: 48px;
+    }
+
+    .message::before {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+    }
+
+    .message.success {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      display: block;
+    }
+
+    .message.success::before {
+      content: '✓';
+    }
+
+    .message.error {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+      color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      display: block;
+    }
+
+    .message.error::before {
+      content: '⚠';
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Enhanced Footer */
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 13px;
+      color: var(--subtext);
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .footer:hover {
+      color: var(--text);
+    }
+
+    .footer::before {
+      content: '🔒';
+      margin-right: 8px;
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+    }
+
+    .footer:hover::before {
+      opacity: 1;
+    }
+
+    /* Utility Animations */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+*:focus-visible:not(input) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+    ::selection {
+      background: var(--accent);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="theme-toggle" onclick="toggleTheme()">
+    <div class="switch-track">
+      <span class="switch-icon sun">☀</span>
+      <span class="switch-icon moon">☽</span>
+      <div class="switch-thumb"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="logo">NRCM <span>Attend</span></div>
+    <div class="tagline">Know where you stand, plan your semester.</div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Login</button>
+      <button class="tab" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- Login Form -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Roll Number</label>
+        <input type="text" id="loginRoll" placeholder="e.g. 24X01XYZC7" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Your NRCM password" />
+      </div>
+      <button class="btn" onclick="handleLogin()">Login →</button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="registerForm" style="display:none;">
+      <div class="form-group">
+        <label>Roll Number</label>
+        <input type="text" id="regRoll" placeholder="e.g. 24X01XYZC7" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="regPass" placeholder="Your NRCM password" />
+      </div>
+      <button class="btn" onclick="handleRegister()">Register →</button>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <div class="footer">
+      Your NRCM credentials are encrypted and never shared with anyone.
+    </div>
+  </div>
+
+  <script>
+    const API = "http://127.0.0.1:8000";
+    let currentTab = 'login';
+    // Check if we were redirected here due to session expiry
+window.onload = function() {
+  const logoutReason = sessionStorage.getItem('logoutReason');
+  if (logoutReason) {
+    showMessage(logoutReason, 'error');
+    sessionStorage.removeItem('logoutReason');
+  }
+};
+
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.getAttribute('data-theme') === 'dark') {
+        html.setAttribute('data-theme', 'light');
+      } else {
+        html.setAttribute('data-theme', 'dark');
+      }
+    }
+
+    // Floating labels
+    document.querySelectorAll('.form-group input').forEach(input => {
+      input.addEventListener('focus', () => {
+        input.parentElement.classList.add('focused');
+      });
+      
+      input.addEventListener('blur', () => {
+        input.parentElement.classList.remove('focused');
+        if (input.value) {
+          input.parentElement.classList.add('filled');
+        } else {
+          input.parentElement.classList.remove('filled');
+        }
+      });
+      
+      // Check initial state
+      if (input.value) {
+        input.parentElement.classList.add('filled');
+      }
+    });
+
+    // Tab switching
+    function switchTab(tab) {
+      currentTab = tab;
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+      clearMessage();
+    }
+
+    // Show message
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = 'message ' + type;
+    }
+    
+    function clearMessage() {
+      const msg = document.getElementById('message');
+      msg.className = 'message';
+    }
+
+    // Login
+    async function handleLogin() {
+      const roll = document.getElementById('loginRoll').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+      if (!roll || !pass) return showMessage('Please fill in all fields!', 'error');
+
+      const btn = event.target;
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roll_number: roll, password: pass })
+        });
+        const data = await res.json();
+        if (!res.ok) return showMessage(data.detail || data.error || 'Login failed!', 'error');
+        
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('roll', roll);
+        showMessage('Login successful! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+      } catch (e) {
+        showMessage('Cannot connect to server. Is it running?', 'error');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    // Register
+    async function handleRegister() {
+      const roll = document.getElementById('regRoll').value.trim();
+      const pass = document.getElementById('regPass').value.trim();
+      if (!roll || !pass) return showMessage('Please fill in all fields!', 'error');
+
+      const btn = event.target;
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roll_number: roll, password: pass })
+        });
+        const data = await res.json();
+        if (!res.ok) return showMessage(data.detail || data.error || 'Registration failed!', 'error');
+        showMessage('Registered successfully! Please login.', 'success');
+        setTimeout(() => switchTab('login'), 1500);
+      } catch (e) {
+        showMessage('Cannot connect to server. Is it running?', 'error');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    // If already logged in, go to dashboard
+    if (localStorage.getItem('token')) {
+      window.location.href = 'dashboard.html';
+    }
+     // ── Enter key submits the active form ──
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const active = document.activeElement;
+            if (active && active.closest('.form-group')) {
+                const form = active.closest('#loginForm, #registerForm');
+                if (form) {
+                    const btn = form.querySelector('.btn');
+                    if (btn && !btn.disabled) btn.click();
+                }
+            }
+        }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NRCM Attendance Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root[data-theme="dark"] {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #2a2a3a;
+      --text: #f0f0f5;
+      --subtext: #8888aa;
+      --accent: #6c63ff;
+      --card: #16161f;
+      --table-header: #1e1e2e;
+      --table-row-alt: #13131a;
+      --table-hover: #1a1a2e;
+      --present: #22c55e;
+      --absent: #ef4444;
+      --notposted: #888;
+      --warning-bg: #f8961e22;
+      --warning-border: #f8961e;
+      --warning-text: #f8961e;
+      --success-bg: #22c55e22;
+      --success-border: #22c55e;
+      --success-text: #22c55e;
+    }
+    :root[data-theme="light"] {
+      --bg: #f4f4f8;
+      --surface: #ffffff;
+      --border: #e0e0ee;
+      --text: #0a0a0f;
+      --subtext: #666688;
+      --accent: #6c63ff;
+      --card: #ffffff;
+      --table-header: #4361ee;
+      --table-row-alt: #f8f9fa;
+      --table-hover: #e9f7fe;
+      --present: #2ecc71;
+      --absent: #e74c3c;
+      --notposted: #7f8c8d;
+      --warning-bg: #f8961e22;
+      --warning-border: #f8961e;
+      --warning-text: #d35400;
+      --success-bg: #22c55e22;
+      --success-border: #22c55e;
+      --success-text: #16a085;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* NAVBAR */
+    .navbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .logo span { color: var(--accent); }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .roll-badge {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--subtext);
+    }
+    .btn-icon {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover { border-color: var(--accent); }
+
+    /* MAIN CONTENT */
+    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+    /* LOADING */
+    .loading {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--subtext);
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* SEMESTER SUMMARY CARDS */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      border-left: 4px solid var(--accent);
+    }
+    .stat-card h6 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--subtext);
+      margin-bottom: 8px;
+    }
+   .stat-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+    .text-success { color: var(--present); }
+    .text-primary { color: var(--accent); }
+    .text-warning { color: var(--warning-text); }
+
+    /* ALERT BOX */
+    .alert-box {
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .warning-box {
+      background: var(--warning-bg);
+      border-left: 4px solid var(--warning-border);
+      color: var(--warning-text);
+    }
+    .success-box {
+      background: var(--success-bg);
+      border-left: 4px solid var(--success-border);
+      color: var(--success-text);
+    }
+
+    /* Skip CALCULATOR */
+    .Skip-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .Skip-card h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+    .Skip-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .Skip-controls label { color: var(--subtext); font-size: 14px; }
+    .Skip-controls input {
+      width: 80px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      text-align: center;
+    }
+    .Skip-result {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    /* SECTION HEADER */
+    .section-header {
+      background: linear-gradient(135deg, #4361ee, #3a0ca3);
+      color: white;
+      padding: 18px 24px;
+      border-radius: 14px 14px 0 0;
+    }
+    .section-header h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    .section-header p { font-size: 13px; opacity: 0.8; }
+
+    /* ATTENDANCE CONTAINER */
+    .attendance-container {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .attendance-body { padding: 20px; }
+
+    /* MONTH TABS */
+    .month-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 20px;
+      scrollbar-width: none;
+    }
+    .month-tabs::-webkit-scrollbar { display: none; }
+    .month-tab {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--subtext);
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .month-tab.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .tab-badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.2);
+    }
+    .month-tab:not(.active) .tab-badge {
+      background: var(--border);
+      color: var(--subtext);
+    }
+
+    /* MONTH STATS */
+    .month-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .month-stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      border-left: 4px solid var(--accent);
+    }
+    .month-stat-card h6 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--subtext);
+      margin-bottom: 6px;
+    }
+    .month-stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    /* ATTENDANCE TABLE */
+    .table-responsive { overflow-x: auto; }
+    .attendance-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border);
+    }
+    .attendance-table th {
+      background: var(--table-header);
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .attendance-table td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .attendance-table tr:nth-child(even) td { background: var(--table-row-alt); }
+    .attendance-table tr:hover td { background: var(--table-hover); }
+    .attendance-table td:first-child { text-align: left; padding-left: 16px; }
+    .date-day { font-size: 11px; color: var(--subtext); }
+
+    .Present { color: var(--present); font-weight: 700; }
+    .absent { color: var(--absent); font-weight: 700; }
+    .Not-posted { color: var(--notposted); font-weight: 700; }
+
+    <!--
+    /* MONTHLY SUMMARY TABLE */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .summary-table th {
+      background: #3a0ca3;
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .summary-table td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .summary-table tr:nth-child(even) td { background: var(--table-row-alt); }
+    .summary-table tr:last-child td {
+      font-weight: 700;
+      background: var(--table-hover);
+      border-top: 2px solid #3a0ca3;
+    }
+    .good-attendance { color: var(--present); font-weight: 700; }
+    .warning-attendance { color: var(--warning-text); font-weight: 700; }
+    .poor-attendance { color: var(--absent); font-weight: 700; }
+
+    /* REFRESH BUTTON */
+    .btn-refresh {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'Syne', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-refresh:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-refresh:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .refresh-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .cache-info { font-size: 13px; color: var(--subtext); }
+
+    /* TAB PANES */
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    @media (max-width: 768px) {
+      .skip-calendar-row {
+  grid-template-columns: 1fr !important;
+ }
+      .summary-grid { grid-template-columns: 1fr; }
+      .month-stats { grid-template-columns: 1fr; }
+      .navbar { padding: 12px 16px; }
+      .container { padding: 16px; }
+    }
+    .theme-switch { cursor: pointer; }
+.switch-track {
+  width: 64px;
+  height: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  transition: background 0.3s;
+}
+.switch-icon { font-size: 13px; z-index: 1; }
+.switch-thumb {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  border-radius: 50%;
+  top: 3px;
+  left: 4px;
+  transition: transform 0.3s;
+}
+[data-theme="dark"] .switch-thumb {
+  transform: translateX(32px);
+}
+/* Welcome popup */
+.welcome-popup {
+  position: fixed;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  z-index: 999;
+  box-shadow: 0 0 20px #6c63ff30;
+  animation: slideDown 0.4s ease, fadeOut 0.4s ease 1.6s forwards;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
+}
+/* Skeleton */
+.skeleton-bar {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="logo">NRCM <span>AttendEase</span></div>
+    <div class="nav-right">
+      <div class="roll-badge" id="rollDisplay">Loading...</div>
+     <div class="theme-switch" onclick="toggleTheme()">
+  <div class="switch-track">
+    <span class="switch-icon sun">🌤️</span>
+    <span class="switch-icon moon">🌙</span>
+    <div class="switch-thumb" id="switchThumb"></div>
+  </div>
+</div>
+      <button class="btn-icon" onclick="confirmLogout()" title="Logout">🚶‍➡️</button>
+      <div id="logoutConfirm" style="display:none; position:absolute; top:60px; right:24px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; z-index:999; text-align:center; min-width:200px;">
+  <p style="font-size:13px; margin-bottom:12px;">Sure you want to leave? 👀</p>
+  <div style="display:flex; gap:8px; justify-content:center;">
+    <button onclick="logout()" style="background:#ef4444; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600;">I'm Out 🚶‍➡️</button>
+    <button onclick="document.getElementById('logoutConfirm').style.display='none'" style="background:var(--surface); color:var(--text); border:1px solid var(--border); padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600;">Stay 😅</button>
+  </div>
+</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="container">
+
+    <!-- LOADING STATE -->
+<div id="loadingState" style="display:none;">
+
+  <!-- Skeleton top bar -->
+  <div class="skeleton-bar" style="width:200px; height:16px; margin-bottom:24px;"></div>
+
+  <!-- Skeleton cards -->
+  <div class="summary-grid">
+    <div class="stat-card"><div class="skeleton-bar" style="width:60%; height:14px; margin-bottom:12px;"></div><div class="skeleton-bar" style="width:40%; height:32px;"></div></div>
+    <div class="stat-card"><div class="skeleton-bar" style="width:60%; height:14px; margin-bottom:12px;"></div><div class="skeleton-bar" style="width:40%; height:32px;"></div></div>
+    <div class="stat-card"><div class="skeleton-bar" style="width:60%; height:14px; margin-bottom:12px;"></div><div class="skeleton-bar" style="width:40%; height:32px;"></div></div>
+  </div>
+
+  <!-- Skeleton alert -->
+  <div class="skeleton-bar" style="width:100%; height:52px; border-radius:12px; margin-bottom:24px;"></div>
+
+  <!-- Skeleton calculator -->
+  <div class="skeleton-bar" style="width:100%; height:100px; border-radius:14px; margin-bottom:24px;"></div>
+
+  <!-- Skeleton table header -->
+  <div class="skeleton-bar" style="width:100%; height:60px; border-radius:14px 14px 0 0;"></div>
+  <div style="background:var(--card); border:1px solid var(--border); border-radius:0 0 14px 14px; padding:16px;">
+    <div class="skeleton-bar" style="width:100%; height:40px; margin-bottom:8px;"></div>
+    <div class="skeleton-bar" style="width:100%; height:40px; margin-bottom:8px;"></div>
+    <div class="skeleton-bar" style="width:100%; height:40px;"></div>
+  </div>
+
+</div>
+
+    <!-- DASHBOARD CONTENT (hidden until data loads) -->
+    <div id="dashboardContent" style="display:none;">
+
+      <!-- REFRESH BAR -->
+      <div class="refresh-bar">
+        <div class="cache-info" id="cacheInfo"></div>
+        <button class="btn-refresh" id="refreshBtn" onclick="forceRefresh()">
+          🔄 Force Refresh
+        </button>
+      </div>
+
+      <!-- SEMESTER SUMMARY -->
+      <div class="summary-grid" id="semesterSummary"></div>
+
+      <!-- ALERT BOX -->
+      <div class="alert-box" id="alertBox"></div>
+
+    <!-- SKIP + CALENDAR ROW -->
+<div class="skip-calendar-row" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+  <!-- SKIP CALCULATOR (compact) -->
+  <div class="Skip-card" style="margin-bottom:0;">
+    <h4>🎯 Skip Calculator</h4>
+    <div class="Skip-controls">
+      <label>Your target attendance %:</label>
+      <input type="number" id="thresholdInput" value="75"/>
+      <button class="btn-refresh" id="calcBtn" onclick="animateCalc()" style="padding: 10px 20px;">Calculate</button>
+    </div>
+    <div class="Skip-result" id="skipResult"></div>
+  </div>
+
+  <!-- CALENDAR CARD -->
+  <div class="Skip-card" style="margin-bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px;">
+    <div>
+      <h4>📅 Attendance Calendar</h4>
+      <p style="color:var(--subtext); font-size:13px; margin-top:8px;">Visualize your attendance day by day on a calendar view</p>
+    </div>
+    <button class="btn-refresh" onclick="window.location.href='../frontend/calendar.html'"style="padding:12px 28px; font-size:15px;">
+      Open Calendar →
+    </button>
+  </div>
+
+</div>
+<!-- END ROW -->
+
+      <!-- DATE-WISE ATTENDANCE (month tabs) -->
+      <div class="attendance-container">
+        <div class="section-header">
+          <h4>📅 Semester Attendance (Month-wise)</h4>
+          <p>View your attendance records organized by month</p>
+        </div>
+        <div class="attendance-body">
+          <div class="month-tabs" id="monthTabs"></div>
+          <div id="monthTabContent"></div>
+        </div>
+      </div>
+      
+      <!-- MONTHLY SUMMARY TABLE --->
+      <div class="attendance-container">
+        <div class="section-header">
+          <h4>📊 Monthly Attendance Summary</h4>
+        </div>
+        <div class="attendance-body">
+          <div class="table-responsive">
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Classes Attended</th>
+                  <th>Total Classes</th>
+                  <th>Percentage</th>
+                </tr>
+              </thead>
+              <tbody id="monthlySummaryBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    
+
+    </div>
+  </div> 
+
+  <script>
+    const API = "http://127.0.0.1:8000";
+    let attendanceData = null;
+
+    // --- INIT ---
+    window.onload = async function() {
+  const token = localStorage.getItem('token');
+  const roll = localStorage.getItem('roll');
+  if (!token) { window.location.href = 'index.html'; return; }
+  document.getElementById('rollDisplay').textContent = roll || 'Student';
+  await loadAttendance();
+
+  // Welcome popup - shows after dashboard loads
+  const popup = document.createElement('div');
+  popup.className = 'welcome-popup';
+  popup.innerHTML = `👋 Welcome back, <strong>${roll}</strong>`;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 4000);
+};
+    // --- THEME --
+    function toggleTheme() {
+  const html = document.documentElement;
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', 'light');
+  } else {
+    html.setAttribute('data-theme', 'dark');
+  }
+}
+    //---CONFIRM LOGOUT---
+    function confirmLogout() {
+  const box = document.getElementById('logoutConfirm');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+    // --- LOGOUT ---
+    function logout(reason = '') {
+  localStorage.removeItem('token');
+  localStorage.removeItem('roll');
+  if (reason) {
+    sessionStorage.setItem('logoutReason', reason);
+  }
+  window.location.href = 'index.html';
+}
+
+    // --- LOAD ATTENDANCE ---
+    async function loadAttendance(force = false) {
+      document.getElementById('loadingState').style.display = 'block';
+      document.getElementById('dashboardContent').style.display = 'none';
+
+      try {
+        const url = force ? `${API}/attendance/refresh` : `${API}/attendance`;
+        const res = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+
+        if (res.status === 401) { logout('Your session expired. Please log in again.'); return; }
+        if (!res.ok) throw new Error('Failed to fetch');
+
+        const result = await res.json();
+        attendanceData = result.data;
+
+        // Cache info
+        const fromCache = result.from_cache;
+        const scrapedAt = new Date(result.scraped_at);
+       const timeStr = scrapedAt.toLocaleTimeString();
+document.getElementById('cacheInfo').innerHTML = fromCache
+  ? `⚡ Last updated at 🕐 <strong>${timeStr}</strong> — click Force Refresh for latest data`
+  : `✅ Attendance updated at 🕐 <strong>${timeStr}</strong>`;
+      renderDashboard(attendanceData);
+
+      } catch(e) {
+        document.getElementById('loadingState').innerHTML = `
+          <p style="color:var(--absent)">❌ Failed to load attendance. Is the server running?</p>`;
+      }
+    }
+
+    // --- FORCE REFRESH ---
+    async function forceRefresh() {
+      const btn = document.getElementById('refreshBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Refreshing...';
+      await loadAttendance(true);
+      btn.disabled = false;
+      btn.textContent = '🔄 Force Refresh';
+    }
+
+    // --- RENDER DASHBOARD ---
+    function renderDashboard(data) {
+      const sem = data.semester_summary;
+      const monthly = data.monthly_summary;
+      const datewise = data.date_wise_attendance;
+
+      // Semester Summary Cards
+      const totalPresent = parseInt(sem.total_present) || 0;
+      const totalClasses = parseInt(sem.total_classes) || 0;
+      const pct = sem.overall_percentage || '0%';
+      const pctNum = parseFloat(pct);
+
+      document.getElementById('semesterSummary').innerHTML = `
+  <div class="stat-card">
+    <h6>Total Present</h6>
+    <div class="stat-value text-success" id="animPresent">0</div>
+  </div>
+  <div class="stat-card">
+    <h6>Total Classes</h6>
+    <div class="stat-value text-primary" id="animTotal">0</div>
+  </div>
+  <div class="stat-card">
+    <h6>Overall Percentage</h6>
+    <div class="stat-value ${pctNum >= 75 ? 'text-success' : 'text-warning'}" id="animPct">0%</div>
+  </div>
+`;
+
+// Animate numbers
+animateCounter('animPresent', 0, totalPresent, 800);
+animateCounter('animTotal', 0, totalClasses, 800);
+animatePct('animPct', 0, pctNum, 800);
+
+      // Alert Box
+      const alertBox = document.getElementById('alertBox');
+      if (pctNum >= 75) {
+        alertBox.className = 'alert-box success-box';
+        alertBox.innerHTML = `✅ <div><strong>Great!</strong> Your attendance is above 75%. Keep it up!</div>`;
+      } else {
+        alertBox.className = 'alert-box warning-box';
+        alertBox.innerHTML = `⚠️ <div><strong>Warning!</strong> Your attendance is below 75%. Regular attendance is important!</div>`;
+      }
+
+      // Skip Calculator
+      window._totalPresent = totalPresent;
+      window._totalClasses = totalClasses;
+      calcSkips();
+
+      // Group date-wise by month
+      const monthGroups = {};
+      datewise.forEach(day => {
+        const m = day.month || 'Unknown';
+        if (!monthGroups[m]) monthGroups[m] = [];
+        monthGroups[m].push(day);
+      });
+
+      // Month Tabs
+      const tabsContainer = document.getElementById('monthTabs');
+      const contentContainer = document.getElementById('monthTabContent');
+      tabsContainer.innerHTML = '';
+      contentContainer.innerHTML = '';
+
+      // Get month stats from monthly_summary
+      const monthStats = {};
+      monthly.forEach(m => {
+        monthStats[m.month] = m;
+      });
+
+      let isFirst = true;
+     Object.keys(monthGroups).reverse().forEach(monthKey => {
+const days = [...monthGroups[monthKey]].reverse();
+        // Find matching monthly summary
+        const stat = Object.values(monthStats).find(s =>
+          monthKey.toLowerCase().includes(s.month.toLowerCase().split(' ')[0].toLowerCase())
+        ) || {};
+
+        const pctVal = parseFloat(stat.percentage) || 0;
+        const badgeColor = pctVal >= 75 ? '#22c55e' : pctVal >= 60 ? '#f8961e' : '#ef4444';
+        const shortName = monthKey.replace('-', ' ').substring(0, 8);
+
+        // Tab button
+        const tab = document.createElement('button');
+        tab.className = `month-tab ${isFirst ? 'active' : ''}`;
+        tab.innerHTML = `${shortName} <span class="tab-badge" style="${pctVal ? `background:${badgeColor}22;color:${badgeColor}` : ''}">${stat.percentage || ''}</span>`;
+        tab.onclick = () => switchTab(monthKey);
+        tab.id = `tab-${monthKey}`;
+        tabsContainer.appendChild(tab);
+
+        // Get period headers from first day
+        const periods = days[0] ? Object.keys(days[0].periods) : [];
+
+        // Tab content
+        const pane = document.createElement('div');
+        pane.className = `tab-pane ${isFirst ? 'active' : ''}`;
+        pane.id = `pane-${monthKey}`;
+        pane.innerHTML = `
+          <div class="month-stats">
+            <div class="month-stat-card">
+              <h6>Present</h6>
+              <div class="month-stat-value text-success">${stat.classes_attended || '-'}</div>
+            </div>
+            <div class="month-stat-card">
+              <h6>Total Classes</h6>
+              <div class="month-stat-value text-primary">${stat.total_classes || '-'}</div>
+            </div>
+            <div class="month-stat-card">
+              <h6>Percentage</h6>
+              <div class="month-stat-value" style="color:${badgeColor}">${stat.percentage || '-'}</div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="attendance-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  ${periods.map(p => `<th>${p}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${days.map(day => {
+                  const dateStr = day.date;
+                  const dayName = getDayName(dateStr);
+                  return `<tr>
+                    <td>
+                      <strong>${dateStr}</strong><br>
+                      <span class="date-day">${dayName}</span>
+                    </td>
+                    ${periods.map(p => {
+                      const val = day.periods[p] || '-';
+                      let cls = '';
+                      if (val === 'P') cls = 'Present';
+                      else if (val === 'A') cls = 'absent';
+                      else if (val === '-') cls = 'Not-posted';
+                      return `<td class="${cls}">${val}</td>`;
+                    }).join('')}
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+        contentContainer.appendChild(pane);
+        isFirst = false;
+      });
+
+      // Monthly Summary Table
+      const tbody = document.getElementById('monthlySummaryBody');
+      tbody.innerHTML = monthly.map(m => {
+        const p = parseFloat(m.percentage);
+        const cls = p >= 75 ? 'good-attendance' : p >= 60 ? 'warning-attendance' : 'poor-attendance';
+        return `<tr>
+          <td>${m.month}</td>
+          <td>${m.classes_attended}</td>
+          <td>${m.total_classes}</td>
+          <td class="${cls}">${m.percentage}</td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('dashboardContent').style.display = 'block';
+    }
+
+    // --- SWITCH TAB ---
+    function switchTab(monthKey) {
+      document.querySelectorAll('.month-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.getElementById(`tab-${monthKey}`).classList.add('active');
+      document.getElementById(`pane-${monthKey}`).classList.add('active');
+    }
+
+    // --- Skip CALCULATOR ---
+    function animateCalc() {
+  const result = document.getElementById('skipResult');
+
+  // Show calculating in result area
+  result.style.opacity = '1';
+  result.style.background = 'var(--surface)';
+  result.style.border = '1px solid var(--border)';
+  result.style.color = 'var(--subtext)';
+  result.innerHTML = 'Calculating <span id="dots">.</span>';
+
+  // Animate dots
+  let count = 0;
+  const dotsInterval = setInterval(() => {
+    count++;
+    const dotsEl = document.getElementById('dots');
+    if (dotsEl) dotsEl.textContent = '.'.repeat((count % 3) + 1);
+  }, 300);
+
+  // After 1.5 seconds show actual result
+  setTimeout(() => {
+    clearInterval(dotsInterval);
+    result.style.opacity = '0';
+    setTimeout(() => {
+      calcSkips();
+      result.style.transition = 'opacity 0.5s ease';
+      result.style.opacity = '1';
+    }, 200);
+  }, 1500);
+}
+    function calcSkips() {
+ const rawValue = document.getElementById('thresholdInput').value;
+const target = rawValue === '' ? 75 : parseInt(rawValue);
+  const present = window._totalPresent || 0;
+  const total = window._totalClasses || 0;
+
+  if (total === 0) return;
+
+  const result = document.getElementById('skipResult');
+
+  // Validate input
+  if (isNaN(target) || target === 0) {
+    result.style.background = 'var(--warning-bg)';
+    result.style.border = '1px solid var(--warning-border)';
+    result.style.color = 'var(--warning-text)';
+    result.innerHTML = `😂 0%? So you're planning to never attend? Bold strategy!`;
+    return;
+  }
+  if (target < 0) {
+    result.style.background = 'var(--warning-bg)';
+    result.style.border = '1px solid var(--warning-border)';
+    result.style.color = 'var(--warning-text)';
+    result.innerHTML = `🤔 Negative attendance? That means college pays YOU to stay home — doesn't work that way!`;
+    return;
+  }
+  if (target === 100) {
+    result.style.background = 'var(--warning-bg)';
+    result.style.border = '1px solid var(--warning-border)';
+    result.style.color = 'var(--warning-text)';
+    result.innerHTML = `😅 100%? Even professors don't attend 100%! Try something realistic like 75%.`;
+    return;
+  }
+  if (target > 100) {
+    result.style.background = 'var(--warning-bg)';
+    result.style.border = '1px solid var(--warning-border)';
+    result.style.color = 'var(--warning-text)';
+    result.innerHTML = `🤣 ${target}%?! Are you planning to attend classes on holidays too? Max is 100%!`;
+    return;
+  }
+
+  const currentPct = (present / total) * 100;
+
+  if (currentPct >= target) {
+    // Can skip: 169 / (222 + x) >= target/100
+    // x <= (169 / (target/100)) - 222
+    const canSkipClasses = Math.floor((present / (target / 100)) - total);
+    const canSkipDays = Math.floor(canSkipClasses / 6);
+    const remainingClasses = canSkipClasses % 6;
+
+    const dayText = canSkipDays > 0 ? `<strong>${canSkipDays} full day${canSkipDays !== 1 ? 's' : ''}</strong>` : '';
+    const classText = remainingClasses > 0 ? `<strong>${remainingClasses} class${remainingClasses > 1 ? 'es' : ''}</strong>` : '';
+    const connector = dayText && classText ? ' and ' : '';
+
+    if (canSkipClasses <= 0) {
+      result.style.background = 'var(--warning-bg)';
+      result.style.border = '1px solid var(--warning-border)';
+      result.style.color = 'var(--warning-text)';
+      result.innerHTML = `⚠️ You cannot skip any more classes to maintain <strong>${target}%</strong>.`;
+    } else {
+      result.style.background = 'var(--success-bg)';
+      result.style.border = '1px solid var(--success-border)';
+      result.style.color = 'var(--success-text)';
+     const newPct = ((present) / (total + canSkipClasses) * 100).toFixed(2);
+result.innerHTML = `✅ You can skip <strong>${dayText}${connector}${classText}</strong> — your attendance stays at <strong>${newPct}%</strong>`;
+    }
+
+  } else {
+    // Need to attend: (169 + x) / (222 + x) = target/100
+    // 169 + x = target/100 * (222 + x)
+    // 169 + x = target/100 * 222 + target/100 * x
+    // x - target/100 * x = target/100 * 222 - 169
+    // x(1 - target/100) = target/100 * 222 - 169
+    // x = (target/100 * 222 - 169) / (1 - target/100)
+    const needClasses = Math.ceil(((target / 100) * total - present) / (1 - target / 100));
+    const needDays = Math.floor(needClasses / 6);
+    const needExtra = needClasses % 6;
+
+    const dayText = needDays > 0 ? `<strong>${needDays} full day${needDays !== 1 ? 's' : ''}</strong>` : '';
+    const classText = needExtra > 0 ? `<strong>${needExtra} class${needExtra > 1 ? 'es' : ''}</strong>` : '';
+    const connector = dayText && classText ? ' and ' : '';
+
+    result.style.background = 'var(--warning-bg)';
+    result.style.border = '1px solid var(--warning-border)';
+    result.style.color = 'var(--warning-text)';
+    result.innerHTML = `❌ You need to attend ${dayText}${connector}${classText} to reach <strong>${target}%</strong>.`;
+  }
+}
+  function animateCounter(id, start, end, duration) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const range = end - start;
+  const startTime = performance.now();
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.floor(start + range * eased);
+    if (progress < 1) requestAnimationFrame(update);
+    else el.textContent = end;
+  }
+  requestAnimationFrame(update);
+}
+
+function animatePct(id, start, end, duration) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const range = end - start;
+  const startTime = performance.now();
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = (start + range * eased).toFixed(2) + '%';
+    if (progress < 1) requestAnimationFrame(update);
+    else el.textContent = end.toFixed(2) + '%';
+  }
+  requestAnimationFrame(update);
+}
+
+    // --- HELPER ---
+    function getDayName(dateStr) {
+  try {
+    // Extract only the date part before any space
+    const cleanDate = dateStr.split(' ')[0];
+    const parts = cleanDate.split('-');
+    // parts[0]=day, parts[1]=month, parts[2]=year
+    const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('en-US', { weekday: 'short' });
+  } catch { return ''; }
+}
+  </script>
+</body>
+</html>
