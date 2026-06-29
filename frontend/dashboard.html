@@ -450,6 +450,14 @@
       .roll-badge { font-size: clamp(10px, 2.5vw, 13px); padding: 4px 10px; }
       .section-header h4 { font-size: clamp(14px, 3.5vw, 16px); }
       .Skip-controls { gap: 10px; }
+       /* NEW: navbar alignment for mobile */
+  .nav-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .nav-right .theme-switch {
+    margin-left: auto;
+  }
     }
     .theme-switch { cursor: pointer; }
 .switch-track {
@@ -849,7 +857,7 @@ const days = [...monthGroups[monthKey]].reverse();
 
         const pctVal = parseFloat(stat.percentage) || 0;
         const badgeColor = pctVal >= 75 ? '#22c55e' : pctVal >= 60 ? '#f8961e' : '#ef4444';
-        const shortName = monthKey.replace('-', ' ').substring(0, 8);
+        const shortName = monthKey.replace('-', ' ');
 
         // Tab button
         const tab = document.createElement('button');
