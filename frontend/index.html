@@ -589,13 +589,19 @@ window.onload = function() {
 
     // Theme toggle
     function toggleTheme() {
-      const html = document.documentElement;
-      if (html.getAttribute('data-theme') === 'dark') {
-        html.setAttribute('data-theme', 'light');
-      } else {
-        html.setAttribute('data-theme', 'dark');
-      }
-    }
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+}
+  // Restore saved theme on load
+(function restoreTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'light' || saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+})();
 
     // Floating labels
     document.querySelectorAll('.form-group input').forEach(input => {
