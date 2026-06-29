@@ -13,6 +13,16 @@ class User(Base):
     scraper_password = Column(String, nullable=False)  # fernet encrypted for scraping
     created_at = Column(DateTime, default=func.now())
 
+    # --- Force Refresh restriction metadata (see refresh_guard.py) ---
+    # Only set/checked when a refresh happens during COLLEGE HOURS.
+    # Kept separate from night-window tracking so the two rules never
+    # interfere with each other.
+    college_last_refresh_at = Column(DateTime, nullable=True)
+    # Identifies which night window the user last used their one
+    # allowed refresh in (e.g. "2026-06-27T16:30:00"). None if they
+    # haven't used a night-window refresh yet.
+    night_window_used_key = Column(String, nullable=True)
+
 # --- ATTENDANCE CACHE TABLE ---
 # Stores scraped attendance data temporarily
 class AttendanceCache(Base):
