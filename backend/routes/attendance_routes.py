@@ -47,7 +47,7 @@ def get_attendance(current_user: User = Depends(get_current_user), db: Session =
             return {
                 "roll_number": current_user.roll_number,
                 "data": json.loads(cache.data),
-                "scraped_at": str(cache.scraped_at + timedelta(hours=5, minutes=30)),
+                "scraped_at": str(cache.scraped_at), # remove + timedelta(...)
                 "from_cache": True
             }
 
@@ -143,6 +143,6 @@ def fetch_fresh_attendance(current_user: User, db: Session):
     return {
         "roll_number": current_user.roll_number,
         "data": data,
-        "scraped_at": str(datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)),
+        "scraped_at": str(datetime.now(timezone.utc)),   # remove + timedelta(...)
         "from_cache": False
     }
