@@ -4,7 +4,7 @@ from database import get_db
 from models import AttendanceCache, User
 from auth import verify_token
 from fastapi.security import OAuth2PasswordBearer
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
 import os
 import sys
@@ -47,7 +47,7 @@ def get_attendance(current_user: User = Depends(get_current_user), db: Session =
             return {
                 "roll_number": current_user.roll_number,
                 "data": json.loads(cache.data),
-                "scraped_at": str(cache.scraped_at),
+                "scraped_at": str(cache.scraped_at + timedelta(hours=5, minutes=30)),
                 "from_cache": True
             }
 
@@ -60,7 +60,7 @@ def get_attendance(current_user: User = Depends(get_current_user), db: Session =
 # restrictions. See refresh_guard.py for the full rule definitions.
 @router.get("/attendance/refresh")
 def refresh_attendance(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    now = datetime.now()  # naive local time — server is expected to run in IST
+    now = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)  # naive local time — server is expected to run in IST
 
     decision = check_refresh_allowed(
         now=now,
@@ -143,6 +143,6 @@ def fetch_fresh_attendance(current_user: User, db: Session):
     return {
         "roll_number": current_user.roll_number,
         "data": data,
-        "scraped_at": str(datetime.now(timezone.utc)),
+        "scraped_at": str(datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)),
         "from_cache": False
     }
