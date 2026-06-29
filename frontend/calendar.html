@@ -9,7 +9,7 @@
     :root[data-theme="dark"] {
       --bg: #0B0E14; --surface: #14181F; --surface-light: #1E232C;
       --border: #2C3240; --border-light: #3A4050;
-      --text: #F0F4FA; --text-secondary: #9AA4B8;
+      --text: #FFFFFF; --text-secondary: #C8D0E0;
       --accent: #7B7EF0; --accent-glow: #7B7EF040;
       --present: #2BD67B; --present-dim: #2BD67B20;
       --absent: #FF5E6C; --absent-dim: #FF5E6C20;
@@ -20,7 +20,7 @@
     :root[data-theme="light"] {
       --bg: #F1F5F9; --surface: #FFFFFF; --surface-light: #F8FAFC;
       --border: #E2E8F0; --border-light: #CBD5E1;
-      --text: #0F172A; --text-secondary: #475569;
+      --text: #0F172A; --text-secondary: #1E293B;
       --accent: #6366F1; --accent-glow: #6366F120;
       --present: #10B981; --present-dim: #10B98120;
       --absent: #EF4444; --absent-dim: #EF444420;
@@ -33,12 +33,44 @@
     body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.5; -webkit-font-smoothing:antialiased; letter-spacing:-0.01em; }
 
     /* NAVBAR */
-    .navbar { position:sticky; top:1rem; z-index:200; margin:1rem 1.5rem 0; border-radius:24px; background:var(--glass); backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px); border:1px solid var(--border-light); box-shadow:var(--shadow); overflow:hidden; }
+    .navbar { position:fixed; top:0; left:0; right:0; width:100%; margin:0; border-radius:0; z-index:1000; background:var(--glass); backdrop-filter:blur(16px) saturate(180%); -webkit-backdrop-filter:blur(16px); border:none; border-bottom:1px solid var(--border-light); box-shadow:var(--shadow); overflow:hidden; transition:padding 0.3s ease, box-shadow 0.3s ease; }
+
+    /* SHRINK STATE — applies identically on all screen sizes */
+    .navbar.scrolled { box-shadow: 0 2px 12px rgba(0,0,0,0.12); }
+    .navbar-left, .navbar-right, .navbar-sub, .warning-banner {
+      transition: opacity 0.3s cubic-bezier(0.34,1.56,0.64,1), transform 0.3s cubic-bezier(0.34,1.56,0.64,1), max-height 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 200px;
+      overflow: hidden;
+    }
+    .navbar.scrolled .navbar-left,
+    .navbar.scrolled .navbar-right {
+      opacity: 0;
+      transform: translateY(-10px);
+      max-height: 0;
+      pointer-events: none;
+    }
+    .navbar.scrolled .navbar-sub,
+    .navbar.scrolled .warning-banner.visible {
+      opacity: 0;
+      transform: translateY(-10px);
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    .navbar.scrolled .navbar-main { padding:0.6rem 1rem; justify-content:center; }
+    .navbar.scrolled .navbar-stats { flex-wrap:wrap; width:auto; justify-content:center; gap:0.5rem 1.5rem; flex:none; }
+    .navbar.scrolled .stat-pill { flex-direction:column; align-items:center; gap:0.1rem; }
+    .navbar.scrolled .stat-pill-label { font-size:0.6rem; }
+    .navbar.scrolled .stat-pill-value { font-size:1.2rem; font-weight:700; line-height:1.2; }
+    .navbar.scrolled .trend-arrow { font-size:0.75rem; padding:0.15rem 0.6rem; }
+    .navbar.scrolled .status-badge { font-size:0.65rem; padding:0.15rem 0.6rem; }
     .navbar-main { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; gap:1rem; flex-wrap:wrap; }
     .navbar-left { display:flex; align-items:center; gap:1rem; }
     .back-btn { background:var(--surface); border:1px solid var(--border); color:var(--text); padding:0.5rem 1.25rem; border-radius:30px; cursor:pointer; font-size:0.875rem; font-weight:500; font-family:'Inter',sans-serif; transition:all 0.2s ease; }
     .back-btn:hover { border-color:var(--accent); transform:translateY(-1px); box-shadow:0 4px 12px var(--accent-glow); }
-    .navbar-title { font-size:1.1rem; font-weight:600; background:linear-gradient(135deg,#fff,var(--text-secondary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .navbar-title {font-size:1.1rem;font-weight:600;background:linear-gradient(135deg,var(--text),var(--text-secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
     .navbar-stats { display:flex; align-items:center; gap:2rem; flex:1; justify-content:center; }
     .stat-pill { display:flex; flex-direction:column; align-items:center; }
     .stat-pill-label { font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; font-weight:500; }
@@ -72,10 +104,40 @@
     .container { max-width:1000px; margin:0 auto; padding:2rem 1.5rem; position:relative; z-index:1; }
 
     /* LEGEND */
-    .legend { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:2.5rem; padding:1rem 1.5rem; background:var(--surface); border:1px solid var(--border); border-radius:50px; box-shadow:var(--shadow); backdrop-filter:blur(8px); }
+    .legend { display:flex; flex-direction:column; margin-bottom:2.5rem; padding:1rem 1.5rem; background:var(--surface); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow); backdrop-filter:blur(8px); cursor:pointer; outline:none; }
+    .legend:focus-visible { box-shadow: var(--shadow), 0 0 0 3px var(--accent-glow); }
+    .legend-core { display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; }
     .legend-item { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; font-weight:500; color:var(--text-secondary); transition:transform 0.2s; }
     .legend-item:hover { transform:translateY(-2px); }
     .legend-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+    .legend-arrow { display:none; margin-left:auto; font-size:0.7rem; color:var(--text-secondary); transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1); flex-shrink:0; }
+    .legend.expanded .legend-arrow { transform:rotate(180deg); }
+
+    /* Desktop/tablet: everything in ONE row, exactly like the original layout */
+    .legend { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 1.5rem; }
+    .legend-core { gap: 1.5rem; }
+    .legend-extra { display: contents; }
+
+    @media (max-width:768px) {
+      .legend { cursor:pointer; }
+      .legend-core { gap:1rem; }
+      .legend-arrow { display:block; }
+      .legend-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  max-height:0; opacity:0; overflow:hidden; margin-top:0;
+  transition: max-height 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease, margin-top 0.3s ease;
+
+}
+      .legend.expanded .legend-extra {
+  max-height: 200px;
+  opacity: 1;
+  margin-top: 0.75rem;
+  justify-content: space-between;
+  width: 100%;
+}
+    }
 
     /* MONTH CARDS */
     .months-wrapper { display:flex; flex-direction:column; gap:2rem; }
@@ -181,7 +243,6 @@
     html, body { max-width: 100%; overflow-x: hidden; }
 
     @media (max-width:768px) {
-      .navbar { margin:0.5rem; top:0.5rem; border-radius:16px; }
       .navbar-main { padding: clamp(0.6rem, 2vw, 1rem) clamp(0.6rem, 3vw, 1.5rem); gap: 0.5rem; }
       .navbar-left { gap: 0.5rem; }
       .navbar-stats { gap:0.75rem; order:3; width:100%; justify-content:space-around; flex-wrap: wrap; }
@@ -194,8 +255,20 @@
       .reset-btn { padding: 0.4rem 0.9rem; font-size: 0.8rem; }
 
       .container { padding: clamp(0.5rem, 2vw, 1rem); }
-      .legend { border-radius:24px; padding: 0.75rem 1rem; gap: 0.75rem; }
-      .legend-item { font-size: 0.7rem; }
+     .legend {
+  border-radius: 24px;
+  padding: 0.75rem 1rem;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.legend-core {
+  width: 100%;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.legend-item { font-size: 0.7rem; flex: 0 1 auto; }
+.legend-arrow { margin-left: 0; }
 
       .month-name { font-size: 0.9rem; }
       .cal-grid { padding: 0.75rem; }
@@ -237,8 +310,8 @@
         <span class="navbar-title">Attendance Planner</span>
       </div>
       <div class="navbar-stats">
-        <div class="stat-pill"><span class="stat-pill-label">Baseline</span><span class="stat-pill-value" id="navBaseline">—</span></div>
-        <div class="stat-pill"><span class="stat-pill-label">Projected</span><span class="stat-pill-value" id="navProjected">—</span></div>
+        <div class="stat-pill"><span class="stat-pill-label">Original</span><span class="stat-pill-value" id="navBaseline">—</span></div>
+        <div class="stat-pill"><span class="stat-pill-label">Planned</span><span class="stat-pill-value" id="navProjected">—</span></div>
         <span class="trend-arrow" id="navTrend"></span>
         <span class="status-badge inactive" id="navBadge">—</span>
       </div>
@@ -252,15 +325,20 @@
   </nav>
 
   <div class="container">
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--present)"></div>Present</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--absent)"></div>Absent</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--partial)"></div>Partial</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--holiday)"></div>Holiday</div>
-      <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,var(--present-dim) 50%,var(--absent-dim) 50%);border:1px solid var(--border)"></div>Past Partial</div>
-      <div class="legend-item"><div class="legend-dot" style="opacity:0.35;background:var(--text-secondary)"></div>No Record</div>
-      <div class="legend-item"><div class="legend-dot" style="background:transparent;border:2px solid var(--accent)"></div>Today</div>
-      <div class="legend-item"><div class="legend-dot" style="background:transparent;border:1px dashed var(--border)"></div>Plannable</div>
+    <div class="legend" id="legendBox" role="button" tabindex="0" aria-expanded="false" onclick="toggleLegend(event)" onkeydown="if(event.key==='Enter'){toggleLegend(event)}">
+      <div class="legend-core">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--present)"></div>Present</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--absent)"></div>Absent</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--partial)"></div>Partial</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--holiday)"></div>Holiday</div>
+        <span class="legend-arrow" id="legendArrow">▼</span>
+      </div>
+      <div class="legend-extra" id="legendExtra">
+        <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,var(--present-dim) 50%,var(--absent-dim) 50%);border:1px solid var(--border)"></div>Past Partial</div>
+        <div class="legend-item"><div class="legend-dot" style="opacity:0.35;background:var(--text-secondary)"></div>No Record</div>
+        <div class="legend-item"><div class="legend-dot" style="background:transparent;border:2px solid var(--accent)"></div>Today</div>
+        <div class="legend-item"><div class="legend-dot" style="background:transparent;border:1px dashed var(--border)"></div>Plannable</div>
+      </div>
     </div>
     <div class="months-wrapper" id="monthsWrapper">
       <div style="text-align:center;padding:60px;color:var(--text-secondary)">📅 Loading planner...</div>
@@ -727,6 +805,41 @@
   }
 })();
     function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+    // ── Collapsible legend ──
+    function toggleLegend(e) {
+      e.stopPropagation();
+      const box = document.getElementById('legendBox');
+      const expanded = box.classList.toggle('expanded');
+      box.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      document.getElementById('legendArrow').textContent = expanded ? '▲' : '▼';
+      // Legend height changed — recheck navbar offset isn't affected,
+      // but if anything below shifts, this keeps things consistent.
+      setTimeout(adjustNavbarPadding, 320);
+    }
+    // ── Navbar shrink-on-scroll + dynamic content offset (all screen sizes) ──
+    const navbarEl = document.querySelector('.navbar');
+
+    function adjustNavbarPadding() {
+      document.body.style.paddingTop = navbarEl.offsetHeight + 'px';
+    }
+
+    window.addEventListener('scroll', function() {
+      if (window.scrollY > 50) {
+        navbarEl.classList.add('scrolled');
+      } else {
+        navbarEl.classList.remove('scrolled');
+      }
+      // Adjust immediately for responsiveness, then again after the
+      // 0.3s transition finishes so padding matches final height exactly.
+      adjustNavbarPadding();
+      setTimeout(adjustNavbarPadding, 320);
+    });
+
+    window.addEventListener('load', adjustNavbarPadding);
+    window.addEventListener('resize', adjustNavbarPadding);
+
+    const navbarObserver = new MutationObserver(adjustNavbarPadding);
+    navbarObserver.observe(navbarEl, { attributes: true, attributeFilter: ['class'] });
   </script>
 </body>
 </html>
