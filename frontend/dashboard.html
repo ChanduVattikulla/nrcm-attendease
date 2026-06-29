@@ -751,7 +751,7 @@
 
         // Cache info
         const fromCache = result.from_cache;
-        const scrapedAt = new Date(result.scraped_at);
+        	const scrapedAt = new Date(result.scraped_at + 'Z');
        const timeStr = scrapedAt.toLocaleTimeString();
 document.getElementById('cacheInfo').innerHTML = fromCache
   ? `⚡ Last updated at 🕐 <strong>${timeStr}</strong> — click Force Refresh for latest data`

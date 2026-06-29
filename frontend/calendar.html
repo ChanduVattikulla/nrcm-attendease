@@ -298,7 +298,7 @@
         if (res.status === 401) { window.location.href = 'index.html'; return; }
         const result = await res.json();
 
-        const sa = new Date(result.scraped_at);
+        	const sa = new Date(result.scraped_at + 'Z');
         document.getElementById('navLastUpdated').textContent = `Last updated: ${sa.toLocaleDateString('en-GB')} ${sa.toLocaleTimeString()}`;
 
         baselinePresent = parseInt(result.data.semester_summary.total_present) || 0;
