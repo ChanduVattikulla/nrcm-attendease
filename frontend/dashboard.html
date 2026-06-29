@@ -698,8 +698,16 @@
 
     // --- LOAD ATTENDANCE ---
     async function loadAttendance(force = false) {
-      document.getElementById('loadingState').style.display = 'block';
-      document.getElementById('dashboardContent').style.display = 'none';
+      // Only show the full-page loading skeleton on the FIRST load.
+      // For Force Refresh on an already-loaded dashboard, keep the
+      // existing content visible and just show a toast/message instead
+      // of wiping the screen — especially important for 429 cooldown
+      // responses where the user's current data is still perfectly valid.
+      const isFirstLoad = document.getElementById('dashboardContent').style.display !== 'block';
+      if (isFirstLoad) {
+        document.getElementById('loadingState').style.display = 'block';
+        document.getElementById('dashboardContent').style.display = 'none';
+      }
 
       try {
         const url = force ? `${API}/attendance/refresh` : `${API}/attendance`;
@@ -708,7 +716,27 @@
         });
 
         if (res.status === 401) { logout(); return; }
-        if (!res.ok) throw new Error('Failed to fetch');
+
+        if (!res.ok) {
+          // Try to read the backend's actual error message (e.g. the
+          // refresh cooldown text) instead of showing a generic error.
+          let message = 'Failed to load attendance.';
+          try {
+            const errBody = await res.json();
+            if (errBody && errBody.detail) message = errBody.detail;
+          } catch (_) { /* body wasn't JSON, fall back to generic message */ }
+
+          if (isFirstLoad) {
+            document.getElementById('loadingState').innerHTML = `
+              <p style="color:var(--absent)">❌ ${message}</p>`;
+          } else {
+            // Dashboard already has valid data on screen — don't replace
+            // it, just tell the user via the cache-info line.
+            document.getElementById('cacheInfo').innerHTML =
+              `⚠️ <strong>${message}</strong>`;
+          }
+          return;
+        }
 
         const result = await res.json();
         attendanceData = result.data;
@@ -723,10 +751,16 @@ document.getElementById('cacheInfo').innerHTML = fromCache
       renderDashboard(attendanceData);
 
       } catch(e) {
-        document.getElementById('loadingState').innerHTML = `
-          <p style="color:var(--absent)">❌ Failed to load attendance. Is the server running?</p>`;
+        if (isFirstLoad) {
+          document.getElementById('loadingState').innerHTML = `
+            <p style="color:var(--absent)">❌ Failed to load attendance. Is the server running?</p>`;
+        } else {
+          document.getElementById('cacheInfo').innerHTML =
+            `⚠️ <strong>Could not reach server. Please try again.</strong>`;
+        }
       }
     }
+
 
     // --- FORCE REFRESH ---
     async function forceRefresh() {
