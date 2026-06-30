@@ -921,6 +921,16 @@
       document.getElementById('navTrend').innerHTML='';
       const badge=document.getElementById('navBadge'); badge.className='status-badge inactive'; badge.textContent='—';
       document.getElementById('navWarning').classList.remove('visible');
+
+      const baselineMobile = document.getElementById('navBaselineMobile');
+      const projectedMobile = document.getElementById('navProjectedMobile');
+      const trendMobile = document.getElementById('navTrendMobile');
+      const badgeMobile = document.getElementById('navBadgeMobile');
+      if (baselineMobile) baselineMobile.textContent = bPct + '%';
+      if (projectedMobile) { projectedMobile.textContent = bPct + '%'; projectedMobile.className = 'stat-pill-value'; }
+      if (trendMobile) trendMobile.innerHTML = '';
+      if (badgeMobile) { badgeMobile.className = 'status-badge inactive'; badgeMobile.textContent = '—'; }
+
       renderCalendar(); showToast('✅ All plans cleared!');
     }
 
