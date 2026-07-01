@@ -38,7 +38,7 @@ def register(request: Request, body: RegisterRequest, db: Session = Depends(get_
         User.roll_number == body.roll_number
     ).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="Student already registered")
+        raise HTTPException(status_code=400, detail="Student already registered. Please log in.")
 
     # Verify credentials work on NRCM portal
     if not verify_nrcm_credentials(body.roll_number, body.password):
