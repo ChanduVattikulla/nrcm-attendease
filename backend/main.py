@@ -82,10 +82,10 @@ app.include_router(attendance_routes.router, tags=["Attendance"])
 @app.get("/")
 def root():
     return {"message": "NRCM Attendance Tracker API is running!"}
-    # --- UPTIMEROBOT SIDE-DOOR ---
-# This route bypasses the database and the scraper to keep Render awake.
-# We apply a generous limit block to ensure UptimeRobot never gets blocked.
-@app.get("/health")
-@limiter.limit("100/minute") # Setting a massive limit so UptimeRobot never trips your guard
+# --- UPTIMEROBOT SIDE-DOOR ---
+# We use @app.route instead of @app.get so we can explicitly allow HEAD requests.
+# This prevents the 405 error from UptimeRobot's free tier.
+@app.route("/health", methods=["GET", "HEAD"])
+@limiter.limit("100/minute")
 def health_check(request: Request):
     return {"status": "awake", "message": "NRCM Attendance Tracker is warm and ready!"}
