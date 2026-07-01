@@ -82,3 +82,10 @@ app.include_router(attendance_routes.router, tags=["Attendance"])
 @app.get("/")
 def root():
     return {"message": "NRCM Attendance Tracker API is running!"}
+    # --- UPTIMEROBOT SIDE-DOOR ---
+# This route bypasses the database and the scraper to keep Render awake.
+# We apply a generous limit block to ensure UptimeRobot never gets blocked.
+@app.get("/health")
+@limiter.limit("100/minute") # Setting a massive limit so UptimeRobot never trips your guard
+def health_check():
+    return {"status": "awake", "message": "NRCM Attendance Tracker is warm and ready!"}
