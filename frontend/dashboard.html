@@ -26,6 +26,19 @@
       --success-bg: #22c55e22;
       --success-border: #22c55e;
       --success-text: #22c55e;
+        --hero-bg: linear-gradient(135deg, #020617 0%, #0F172A 40%, #1E1B4B 70%, #312E81 100%);
+  --hero-bubble: rgba(79, 70, 229, 0.25);
+  --hero-text: #ffffff;
+  --hero-label: rgba(255, 255, 255, 0.8);
+  --hero-progress-bg: rgba(255, 255, 255, 0.15);
+  --hero-progress-fill: #ffffff;
+  --hero-success: #34d399;   /* bright emerald for dark bg */
+  --hero-primary: #a78bfa;   /* light purple for dark bg */
+    --shadow-dark: rgba(0, 0, 0, 0.12);
+  --shadow-light: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(108, 99, 255, 0.16);
+--glass-border: rgba(167, 139, 250, 0.3);
+--glass-highlight: rgba(255, 255, 255, 0.12);
     }
     :root[data-theme="light"] {
       --bg: #f4f4f8;
@@ -47,6 +60,19 @@
       --success-bg: #22c55e22;
       --success-border: #22c55e;
       --success-text: #16a085;
+        --hero-bg: linear-gradient(135deg, #F8F7FF 0%, #EDE9FE 30%, #DDD6FE 60%, #C7D2FE 100%);
+  --hero-bubble: rgba(99, 102, 241, 0.15);
+  --hero-text: #0F172A;
+--hero-label: var(--text);  /* #0a0a0f – almost black */
+  --hero-progress-bg: rgba(0, 0, 0, 0.06);
+  --hero-progress-fill: var(--accent);
+  --hero-success: #047857;   /* ← dark emerald */
+  --hero-primary: #4338ca;   /* ← dark indigo (optional, but matches contrast) */
+    --shadow-dark: rgba(0, 0, 0, 0.15);
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --glass-bg: rgba(99, 102, 241, 0.09);
+--glass-border: rgba(99, 102, 241, 0.3);
+--glass-highlight: rgba(255, 255, 255, 0.7);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -168,14 +194,31 @@
 
     /* ALERT BOX */
     .alert-box {
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 24px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(8px) saturate(180%);        /* ← add */
+  -webkit-backdrop-filter: blur(8px) saturate(180%); /* ← add */
+  border: 1px solid var(--border);  
+   position: relative;
+  overflow: hidden; /* required for the glow */                 /* ← add */
+}
+.alert-box::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+  opacity: 0.08;
+  border-radius: 50%;
+  pointer-events: none;
+}
     .warning-box {
       background: var(--warning-bg);
       border-left: 4px solid var(--warning-border);
@@ -508,38 +551,68 @@
   100% { background-position: -200% 0; }
 }
 /* ── Mobile Premium Stats Card ── */
+/* ── Mobile Premium Stats Card ── */
 .hero-stats-card {
   display: none;
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--hero-bg);
+  border: none;
   border-radius: 20px;
   padding: 24px 20px;
   margin-bottom: 24px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   animation: statsEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   transition: background 0.3s, border-color 0.3s;
+  position: relative;
+  overflow: hidden;
 }
+.hero-stats-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, var(--hero-bubble) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
 @keyframes statsEntrance {
   from { opacity: 0; transform: translateY(12px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
+
+#planCalendarBtn {
+  animation: calendarEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes calendarEntrance {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .hero-stats-header {
   display: flex;
   justify-content: flex-start;
   align-items: center;
   margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
 }
 .hero-stats-header h5 {
   font-size: 14px;
   font-weight: 600;
-  color: var(--subtext);
+  color: var(--hero-label);
+  opacity: 0.7;
   letter-spacing: 0.3px;
 }
+
 .hero-stats-row {
   display: flex;
   justify-content: space-around;
   align-items: center;
   gap: 8px;
+  position: relative;
+  z-index: 1;
 }
 .hero-stat-item {
   text-align: center;
@@ -547,36 +620,82 @@
 }
 .hero-stat-item .stat-number {
   font-family: 'Syne', sans-serif;
-  font-size: clamp(22px, 6vw, 28px);
+font-size: clamp(24px, 7vw, 32px);
   font-weight: 700;
   display: block;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+    -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0); /* only for light mode */
+  
+  
 }
 .hero-stat-item .stat-label {
-  font-size: 12px;
-  color: var(--subtext);
+  font-size: 10px;
+  color: var(--hero-label);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   margin-top: 4px;
   display: block;
 }
+
 .hero-progress-bar {
   height: 4px;
-  background: var(--border);
+  background: var(--hero-progress-bg);
   border-radius: 99px;
   margin-top: 16px;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 .hero-progress-fill {
   height: 100%;
-  background: var(--present);
+  background: var(--hero-progress-fill);
   border-radius: 99px;
   transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
   width: 0%;
 }
+/* ── Override number colors INSIDE the hero card ── */
+.hero-stats-card .text-success {
+  color: var(--hero-success);
+}
+.hero-stats-card .text-primary {
+  color: var(--hero-primary);
+}
+
 /* Small phones — stack everything to a single column */
     @media (max-width: 480px) {
+       /* ── Premium Alert Box – Mobile Only ── */
+.alert-box {
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glow bubble (optional) */
+.alert-box::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+  opacity: 0.08;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Remove left accent border on mobile */
+.alert-box.warning-box,
+.alert-box.success-box {
+  border-left: none;
+}
       .summary-grid { grid-template-columns: 1fr; }
       .month-stats { grid-template-columns: 1fr; }
 
@@ -613,7 +732,7 @@
     color: var(--subtext);
     border: 2px solid var(--border);
     padding: 8px 20px;
-    border-radius: 20px;
+    border-radius: 10px;
     font-size: 13px;
     font-weight: 500;
     box-shadow: none;
@@ -631,12 +750,84 @@
     opacity: 0.4;
     cursor: not-allowed;
   }
-  .Skip-controls #calcBtn {
-    flex: 1 1 100%;
-    justify-content: center;
-    text-align: center;
-  }
+.Skip-controls #calcBtn {
+  flex: 1 1 100%;
+  justify-content: center;
+  text-align: center;
+ background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  color: var(--text);
+ border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 
+    2px 4px 12px var(--shadow-dark),
+    -2px -2px 8px var(--shadow-light),
+   inset 0 1px 0 var(--glass-highlight);
+  transform: translateY(0);
+}
+
+.Skip-controls #calcBtn:hover {
+ background: var(--glass-bg);
+border-color: var(--glass-border);
+  box-shadow: 
+    4px 8px 20px var(--shadow-dark),
+    -4px -4px 12px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.Skip-controls #calcBtn:active {
+  transform: scale(0.97);
+  box-shadow: 
+    1px 2px 6px var(--shadow-dark),
+    -1px -1px 4px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+#planCalendarBtn {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow:
+    2px 4px 12px var(--shadow-dark),
+    -2px -2px 8px var(--shadow-light),
+    inset 0 1px 0 var(--glass-highlight);
+  transition: all 0.25s ease;
+}
+#planCalendarBtn:hover {
+ background: var(--glass-bg);
+border-color: var(--glass-border);
+  box-shadow:
+    4px 8px 20px var(--shadow-dark),
+    -4px -4px 12px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+#planCalendarBtn:active {
+  transform: scale(0.97);
+  box-shadow:
+    1px 2px 6px var(--shadow-dark),
+    -1px -1px 4px var(--shadow-light),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
     }
+    /* ── Celebration pulse (soft, gentle) ── */
+@keyframes celebPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+/* ── Warning pulse (slightly more noticeable) ── */
+@keyframes warningPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.01); opacity: 0.95; }
+}
   </style>
 </head>
 <body>
@@ -742,7 +933,7 @@
   <div class="Skip-card" style="margin-bottom:0;">
     <h4>🎯 Skip Calculator</h4>
     <div class="Skip-controls">
-      <label>Your target attendance %:</label>
+      <label>Enter your target attendance %</label>
       <input type="number" id="thresholdInput" value="75"/>
       <button class="btn-refresh" id="calcBtn" onclick="animateCalc()" style="padding: 10px 20px;">Calculate</button>
     </div>
@@ -750,14 +941,14 @@
   </div>
 
   <!-- CALENDAR CARD -->
-  <div class="Skip-card" style="margin-bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px;">
+<div class="Skip-card" style="margin-bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px;">
     <div>
       <h4>📅 Attendance Calendar</h4>
       <p style="color:var(--subtext); font-size:13px; margin-top:8px;">Plan your semester with a clear day‑by‑day view</p>
     </div>
-    <button class="btn-refresh" onclick="window.location.href='calendar.html'"style="padding:12px 28px; font-size:15px;">
-      Plan Calendar →
-    </button>
+   <button class="btn-refresh" id="planCalendarBtn" onclick="window.location.href='calendar.html'"style="padding:12px 28px; font-size:15px;">
+  Plan Calendar →
+</button>
   </div>
 
 </div>
@@ -969,10 +1160,20 @@ setTimeout(() => {
       const alertBox = document.getElementById('alertBox');
       if (pctNum >= 75) {
         alertBox.className = 'alert-box success-box';
-        alertBox.innerHTML = `✅ <div><strong>Great!</strong> Your attendance is above 75%. Keep it up!</div>`;
+        alertBox.innerHTML = `
+ <div style="display:flex; align-items:center; gap:6px; animation: celebPulse 2s ease-in-out infinite; font-size: clamp(14px, 2.8vw, 18px);">
+  <span style="font-size: clamp(18px, 4vw, 22px); flex-shrink:0;">🎉</span>
+  <div>You're above 75 – keep the vibe!</div>
+</div>
+`;
       } else {
         alertBox.className = 'alert-box warning-box';
-        alertBox.innerHTML = `⚠️ <div><strong>Warning!</strong> Your attendance is below 75%. Regular attendance is important!</div>`;
+       alertBox.innerHTML = `
+  <div style="display:flex; align-items:center; gap:6px; animation: warningPulse 2s ease-in-out infinite; font-size: clamp(14px, 2.8vw, 18px);">
+  <span style="font-size: clamp(18px, 4vw, 22px); flex-shrink:0;">⚠️</span>
+  <div>Below 75% – be regular from now.</div>
+</div>
+`;
       }
 
       // Skip Calculator
