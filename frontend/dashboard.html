@@ -348,7 +348,7 @@
     .absent { color: var(--absent); font-weight: 700; }
     .Not-posted { color: var(--notposted); font-weight: 700; }
 
-    <!--
+    
     /* MONTHLY SUMMARY TABLE */
     .summary-table {
       width: 100%;
@@ -441,24 +441,8 @@
       }
     }
 
-    /* Small phones — stack everything to a single column */
-    @media (max-width: 480px) {
-      .summary-grid { grid-template-columns: 1fr; }
-      .month-stats { grid-template-columns: 1fr; }
-
-      .logo { font-size: clamp(16px, 5vw, 20px); }
-      .roll-badge { font-size: clamp(10px, 2.5vw, 13px); padding: 4px 10px; }
-      .section-header h4 { font-size: clamp(14px, 3.5vw, 16px); }
-      .Skip-controls { gap: 10px; }
-       /* NEW: navbar alignment for mobile */
-  .nav-right {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .nav-right .theme-switch {
-    margin-left: auto;
-  }
-    }
+    
+    /* THEME SWITCH */
     .theme-switch { cursor: pointer; }
 .switch-track {
   width: 64px;
@@ -523,6 +507,136 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+/* ── Mobile Premium Stats Card ── */
+.hero-stats-card {
+  display: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  animation: statsEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: background 0.3s, border-color 0.3s;
+}
+@keyframes statsEntrance {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+.hero-stats-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.hero-stats-header h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--subtext);
+  letter-spacing: 0.3px;
+}
+.hero-stats-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 8px;
+}
+.hero-stat-item {
+  text-align: center;
+  flex: 1;
+}
+.hero-stat-item .stat-number {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(22px, 6vw, 28px);
+  font-weight: 700;
+  display: block;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.hero-stat-item .stat-label {
+  font-size: 12px;
+  color: var(--subtext);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 4px;
+  display: block;
+}
+.hero-progress-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 99px;
+  margin-top: 16px;
+  overflow: hidden;
+}
+.hero-progress-fill {
+  height: 100%;
+  background: var(--present);
+  border-radius: 99px;
+  transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: 0%;
+}
+/* Small phones — stack everything to a single column */
+    @media (max-width: 480px) {
+      .summary-grid { grid-template-columns: 1fr; }
+      .month-stats { grid-template-columns: 1fr; }
+
+      .logo { font-size: clamp(16px, 5vw, 20px); }
+      .roll-badge { font-size: clamp(10px, 2.5vw, 13px); padding: 4px 10px; }
+      .section-header h4 { font-size: clamp(14px, 3.5vw, 16px); }
+      .Skip-controls { gap: 10px; }
+       /* NEW: navbar alignment for mobile */
+  .nav-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .nav-right .theme-switch {
+    margin-left: auto;
+  }
+    .hero-stats-card {
+    display: block;
+  }
+  .summary-grid {
+    display: none !important;
+  }
+    /* ── Center & soften refresh bar on mobile ── */
+  .refresh-bar {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+  }
+  .cache-info {
+    text-align: center;
+  }
+  #refreshBtn {
+    background: var(--surface);
+    color: var(--subtext);
+    border: 2px solid var(--border);
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: none;
+    transition: all 0.25s ease;
+    width:100%;
+     text-align: center;
+    justify-content: center;
+  }
+  #refreshBtn:hover:not(:disabled) {
+    color: var(--text);
+    border-color: var(--accent);
+    background: var(--surface-light);
+  }
+  #refreshBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .Skip-controls #calcBtn {
+    flex: 1 1 100%;
+    justify-content: center;
+    text-align: center;
+  }
+    }
   </style>
 </head>
 <body>
@@ -595,6 +709,29 @@
 
       <!-- SEMESTER SUMMARY -->
       <div class="summary-grid" id="semesterSummary"></div>
+      <!-- Hero stats card (mobile only) -->
+<div class="hero-stats-card" id="heroStatsCard">
+  <div class="hero-stats-header">
+    <h5>👋 Your attendance overview</h5>
+  </div>
+  <div class="hero-stats-row">
+    <div class="hero-stat-item">
+      <span class="stat-number text-success" id="heroPresent">0</span>
+      <span class="stat-label">Present</span>
+    </div>
+    <div class="hero-stat-item">
+      <span class="stat-number text-primary" id="heroTotal">0</span>
+      <span class="stat-label">Classes</span>
+    </div>
+    <div class="hero-stat-item">
+      <span class="stat-number text-success" id="heroPct">0%</span>
+      <span class="stat-label">Overall %</span>
+    </div>
+  </div>
+  <div class="hero-progress-bar">
+    <div class="hero-progress-fill" id="heroProgressFill"></div>
+  </div>
+</div>
 
       <!-- ALERT BOX -->
       <div class="alert-box" id="alertBox"></div>
@@ -616,10 +753,10 @@
   <div class="Skip-card" style="margin-bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px;">
     <div>
       <h4>📅 Attendance Calendar</h4>
-      <p style="color:var(--subtext); font-size:13px; margin-top:8px;">Visualize your attendance day by day on a calendar view</p>
+      <p style="color:var(--subtext); font-size:13px; margin-top:8px;">Plan your semester with a clear day‑by‑day view</p>
     </div>
     <button class="btn-refresh" onclick="window.location.href='calendar.html'"style="padding:12px 28px; font-size:15px;">
-      Open Calendar →
+      Plan Calendar →
     </button>
   </div>
 
@@ -630,7 +767,7 @@
       <div class="attendance-container">
         <div class="section-header">
           <h4>📅 Semester Attendance (Month-wise)</h4>
-          <p>View your attendance records organized by month</p>
+          <p>View your attendance stats to plan smartly</p>
         </div>
         <div class="attendance-body">
           <div class="month-tabs" id="monthTabs"></div>
@@ -814,10 +951,19 @@ document.getElementById('cacheInfo').innerHTML = fromCache
   </div>
 `;
 
-// Animate numbers
+// Animate desktop stat cards
 animateCounter('animPresent', 0, totalPresent, 800);
 animateCounter('animTotal', 0, totalClasses, 800);
 animatePct('animPct', 0, pctNum, 800);
+
+// Animate mobile hero card
+animateCounter('heroPresent', 0, totalPresent, 800);
+animateCounter('heroTotal', 0, totalClasses, 800);
+animatePct('heroPct', 0, pctNum, 800);
+// Set progress bar
+setTimeout(() => {
+  document.getElementById('heroProgressFill').style.width = pctNum + '%';
+}, 100);
 
       // Alert Box
       const alertBox = document.getElementById('alertBox');
