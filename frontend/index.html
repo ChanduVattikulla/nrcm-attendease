@@ -552,7 +552,7 @@ input:-webkit-autofill:active {
         <label>Password</label>
         <input type="password" id="loginPass" placeholder="Your NRCM password" />
       </div>
-      <button class="btn" onclick="handleLogin()">Login →</button>
+      <button class="btn" onclick="handleLogin()">Login</button>
     </div>
 
     <!-- Register Form -->
@@ -565,7 +565,7 @@ input:-webkit-autofill:active {
         <label>Password</label>
         <input type="password" id="regPass" placeholder="Your NRCM password" />
       </div>
-      <button class="btn" onclick="handleRegister()">Register →</button>
+      <button class="btn" onclick="handleRegister()">Register</button>
     </div>
 
     <div class="message" id="message"></div>
@@ -671,7 +671,7 @@ window.onload = function() {
         showMessage('Login successful! Redirecting...', 'success');
         setTimeout(() => window.location.href = 'dashboard.html', 1000);
       } catch (e) {
-        showMessage('Cannot connect to server. Is it running?', 'error');
+        showMessage('Cannot connect to server. Please try again later.', 'error');
       } finally {
         btn.classList.remove('loading');
         btn.disabled = false;
@@ -699,7 +699,7 @@ window.onload = function() {
         showMessage('Registered successfully! Please login.', 'success');
         setTimeout(() => switchTab('login'), 1500);
       } catch (e) {
-        showMessage('Cannot connect to server. Is it running?', 'error');
+        showMessage('Cannot connect to server. Please try again later.', 'error');
       } finally {
         btn.classList.remove('loading');
         btn.disabled = false;
