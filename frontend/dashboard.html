@@ -6,20 +6,18 @@
   <title>NRCM Attendance Tracker</title>
   <style>
     /* =========================================================
-       NRCM AttendEase — Apple-style system design
-       Neutral, near-monochrome surface language (true black /
-       elevated grays), a single restrained blue accent, and
-       system semantic colors (green/red/orange) used only in
-       small doses — never as decoration. No custom display
-       fonts: the OS's own system font, like a native app.
-       Signature element: an Activity-Ring style attendance ring.
+       NRCM AttendEase — Apple-style system design, motion pass.
+       Neutral surfaces, one restrained blue accent, system
+       semantic colors used sparingly. Motion: elastic activity
+       ring, scroll-triggered blur reveals, sliding segmented
+       control, cursor-tilt cards, staggered rows, live pulse.
        ========================================================= */
 
     :root[data-theme="dark"] {
       --bg: #000000;
-      --surface: #1C1C1E;      /* grouped background */
+      --surface: #1C1C1E;
       --card: #1C1C1E;
-      --card-2: #2C2C2E;       /* nested / elevated */
+      --card-2: #2C2C2E;
       --border: rgba(255,255,255,0.09);
       --border-strong: rgba(255,255,255,0.16);
       --text: #F5F5F7;
@@ -28,12 +26,15 @@
 
       --accent: #0A84FF;
       --accent-soft: rgba(10,132,255,0.16);
+      --accent-glow: rgba(10,132,255,0.35);
       --accent-ink: #FFFFFF;
 
       --present: #30D158;
       --present-soft: rgba(48,209,88,0.15);
+      --present-glow: rgba(48,209,88,0.35);
       --absent: #FF453A;
       --absent-soft: rgba(255,69,58,0.15);
+      --absent-glow: rgba(255,69,58,0.32);
       --warning: #FF9F0A;
       --warning-soft: rgba(255,159,10,0.14);
       --notposted: #636366;
@@ -57,6 +58,8 @@
 
       --shadow: rgba(0,0,0,0.45);
       --ring-track: rgba(255,255,255,0.10);
+      --blob-a: rgba(10,132,255,0.10);
+      --blob-b: rgba(48,209,88,0.055);
     }
 
     :root[data-theme="light"] {
@@ -72,12 +75,15 @@
 
       --accent: #007AFF;
       --accent-soft: rgba(0,122,255,0.10);
+      --accent-glow: rgba(0,122,255,0.25);
       --accent-ink: #FFFFFF;
 
       --present: #248A3D;
       --present-soft: rgba(36,138,61,0.10);
+      --present-glow: rgba(36,138,61,0.25);
       --absent: #D70015;
       --absent-soft: rgba(215,0,21,0.09);
+      --absent-glow: rgba(215,0,21,0.22);
       --warning: #C93400;
       --warning-soft: rgba(201,52,0,0.09);
       --notposted: #AEAEB2;
@@ -101,6 +107,8 @@
 
       --shadow: rgba(60,60,67,0.12);
       --ring-track: rgba(60,60,67,0.12);
+      --blob-a: rgba(0,122,255,0.07);
+      --blob-b: rgba(36,138,61,0.045);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -114,7 +122,32 @@
       transition: background 0.3s, color 0.3s;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
+      position: relative;
     }
+
+    /* ---------- AMBIENT BACKGROUND (subtle, slow, monochrome-ish) ---------- */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      width: 58vw; height: 58vw;
+      max-width: 640px; max-height: 640px;
+      border-radius: 50%;
+      filter: blur(90px);
+      z-index: -1;
+      pointer-events: none;
+    }
+    body::before {
+      background: radial-gradient(circle, var(--blob-a), transparent 70%);
+      top: -18%; left: -12%;
+      animation: driftA 24s ease-in-out infinite alternate;
+    }
+    body::after {
+      background: radial-gradient(circle, var(--blob-b), transparent 70%);
+      bottom: -22%; right: -14%;
+      animation: driftB 28s ease-in-out infinite alternate;
+    }
+    @keyframes driftA { from { transform: translate(0,0) scale(1); } to { transform: translate(6%, 5%) scale(1.1); } }
+    @keyframes driftB { from { transform: translate(0,0) scale(1); } to { transform: translate(-6%, -5%) scale(1.06); } }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
@@ -130,7 +163,7 @@
 
     /* ---------- NAVBAR ---------- */
     .navbar {
-      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      background: color-mix(in srgb, var(--surface) 78%, transparent);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       border-bottom: 1px solid var(--border);
@@ -159,7 +192,9 @@
       color: #fff;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
+      transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
     }
+    .logo:hover .mark { transform: rotate(-10deg) scale(1.08); }
     .logo .mark svg { width: 14px; height: 14px; }
     .logo span.brand { color: var(--subtext); font-weight: 400; }
     .nav-right { display: flex; align-items: center; gap: 10px; }
@@ -178,6 +213,11 @@
       width: 6px; height: 6px; border-radius: 50%;
       background: var(--present);
       flex-shrink: 0;
+      animation: dotPulse 2.2s ease-in-out infinite;
+    }
+    @keyframes dotPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(48,209,88,0.45); }
+      50%      { box-shadow: 0 0 0 4px rgba(48,209,88,0); }
     }
     .btn-icon {
       background: var(--card-2);
@@ -190,10 +230,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.15s;
     }
-    .btn-icon:hover { background: var(--border-strong); }
-    .btn-icon:active { transform: scale(0.94); }
+    .btn-icon:hover { background: var(--border-strong); transform: translateY(-1px); }
+    .btn-icon:active { transform: scale(0.92); }
     .btn-icon svg { width: 16px; height: 16px; }
 
     /* ---------- MAIN ---------- */
@@ -214,9 +254,9 @@
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .reveal { opacity: 0; transform: translateY(10px); }
-    .reveal.in-view { animation: revealIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    @keyframes revealIn { to { opacity: 1; transform: translateY(0); } }
+    .reveal { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+    .reveal.in-view-css { animation: revealIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes revealIn { to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 
     /* ---------- ACTIVITY RING (signature element) ---------- */
     .ring-row {
@@ -226,7 +266,12 @@
       margin-bottom: 18px;
     }
     .ring-wrap { position: relative; width: 92px; height: 92px; flex-shrink: 0; }
-    .ring-wrap svg { width: 92px; height: 92px; transform: rotate(-90deg); }
+    .ring-wrap svg { width: 92px; height: 92px; transform: rotate(-90deg); display: block; }
+    .ring-wrap.pulse svg { animation: ringPulse 2.6s ease-in-out infinite; }
+    @keyframes ringPulse {
+      0%, 100% { filter: drop-shadow(0 0 0px transparent); }
+      50%      { filter: drop-shadow(0 0 9px var(--ring-glow-color, transparent)); }
+    }
     .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 8; }
     .ring-fill {
       fill: none;
@@ -246,6 +291,10 @@
     .ring-center .ring-label { font-size: 8.5px; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 1px; }
     .ring-copy h3 { font-size: clamp(16px, 3.5vw, 19px); font-weight: 600; letter-spacing: -0.01em; margin-bottom: 3px; }
     .ring-copy p { font-size: 13px; color: var(--subtext); }
+
+    /* ---------- TILT-ABLE CARDS ---------- */
+    .tilt-card { transition: transform 0.18s cubic-bezier(0.16,1,0.3,1), border-color 0.2s, box-shadow 0.2s; will-change: transform; }
+    .tilt-card:hover { border-color: var(--border-strong); box-shadow: 0 10px 30px var(--shadow); }
 
     /* ---------- STAT CARDS (desktop) ---------- */
     .summary-grid {
@@ -272,7 +321,10 @@
       letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
       font-feature-settings: 'tnum' 1;
+      display: inline-block;
     }
+    .stat-value.bump { animation: bump 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.1); } 100% { transform: scale(1); } }
     .text-success { color: var(--present); }
     .text-primary { color: var(--accent); }
     .text-warning { color: var(--warning); }
@@ -323,9 +375,9 @@
       outline: none;
       text-align: center;
       font-variant-numeric: tabular-nums;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .Skip-controls input:focus { border-color: var(--accent); }
+    .Skip-controls input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
     .Skip-result {
       margin-top: 14px;
       padding: 13px 15px;
@@ -335,7 +387,7 @@
       line-height: 1.5;
     }
 
-    /* ---------- SECTION HEADER (Apple grouped-list label) ---------- */
+    /* ---------- SECTION HEADER ---------- */
     .section-header {
       background: transparent;
       color: var(--text);
@@ -357,12 +409,14 @@
       border-radius: 16px;
       overflow: hidden;
       margin-bottom: 16px;
+      transition: border-color 0.2s;
     }
     .attendance-container .section-header { padding-left: clamp(16px,3vw,20px); padding-right: clamp(16px,3vw,20px); padding-top: clamp(16px,3vw,18px); }
     .attendance-body { padding: 0 clamp(6px,2vw,12px) clamp(14px,3vw,18px); }
 
-    /* ---------- MONTH TABS: segmented control ---------- */
+    /* ---------- MONTH TABS: sliding segmented control ---------- */
     .month-tabs {
+      position: relative;
       display: flex;
       gap: 2px;
       overflow-x: auto;
@@ -373,7 +427,19 @@
       border-radius: 11px;
     }
     .month-tabs::-webkit-scrollbar { display: none; }
+    .tab-indicator {
+      position: absolute;
+      top: 3px; bottom: 3px; left: 3px; width: 0;
+      background: var(--card);
+      border-radius: 8px;
+      box-shadow: 0 1px 4px var(--shadow);
+      transition: left 0.4s cubic-bezier(0.34,1.56,0.64,1), width 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 0;
+      pointer-events: none;
+    }
     .month-tab {
+      position: relative;
+      z-index: 1;
       padding: 7px 14px;
       border-radius: 8px;
       border: none;
@@ -383,16 +449,12 @@
       white-space: nowrap;
       font-size: 13px;
       font-weight: 500;
-      transition: background 0.2s, color 0.2s;
+      transition: color 0.2s;
       display: flex;
       align-items: center;
       gap: 7px;
     }
-    .month-tab.active {
-      background: var(--card);
-      color: var(--text);
-      box-shadow: 0 1px 3px var(--shadow);
-    }
+    .month-tab.active { color: var(--text); }
     .tab-badge {
       font-size: 10.5px;
       padding: 1px 6px;
@@ -414,11 +476,13 @@
       background: var(--card-2);
       border-radius: 12px;
       padding: 12px;
+      transition: transform 0.2s cubic-bezier(0.16,1,0.3,1);
     }
+    .month-stat-card:hover { transform: translateY(-2px); }
     .month-stat-card h6 { font-size: 10.5px; color: var(--subtext); margin-bottom: 5px; font-weight: 500; }
     .month-stat-value { font-size: clamp(16px, 4vw, 20px); font-weight: 700; letter-spacing: -0.02em; }
 
-    /* ---------- ATTENDANCE TABLE (grouped list, hairline rows) ---------- */
+    /* ---------- ATTENDANCE TABLE ---------- */
     .table-responsive { overflow-x: auto; padding: 0 clamp(10px,2vw,14px); }
     .attendance-table { width: 100%; border-collapse: collapse; }
     .attendance-table th {
@@ -449,7 +513,10 @@
       border-radius: 7px;
       font-weight: 600;
       font-size: 12.5px;
+      transition: transform 0.15s;
     }
+    .attendance-table tr:hover .Present,
+    .attendance-table tr:hover .absent { transform: scale(1.08); }
     .Present    { color: var(--present); background: var(--present-soft); }
     .absent     { color: var(--absent);  background: var(--absent-soft); }
     .Not-posted { color: var(--notposted); background: transparent; font-weight: 500; }
@@ -467,6 +534,8 @@
       border-bottom: 1px solid var(--border);
     }
     .summary-table td { padding: 11px 12px; text-align: center; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+    .summary-table tr { transition: background 0.15s; }
+    .summary-table tr:hover td { background: var(--table-hover); }
     .summary-table td:first-child { text-align: left; font-weight: 500; }
     .summary-table tr:last-child td { border-bottom: none; font-weight: 700; background: var(--card-2); }
     .good-attendance    { color: var(--present); font-weight: 700; }
@@ -479,10 +548,11 @@
       background: var(--border); margin-top: 6px; overflow: hidden;
     }
     .summary-table td.pct-cell .pct-fill {
-      position: absolute; inset: 0; width: var(--pct, 0%);
+      position: absolute; inset: 0 100% 0 0;
       border-radius: 99px; background: currentColor;
-      transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+      transition: right 0.9s cubic-bezier(0.16,1,0.3,1);
     }
+    .summary-table td.pct-cell.filled .pct-fill { right: calc(100% - var(--pct, 0%)); }
 
     /* ---------- BUTTONS ---------- */
     .btn-refresh {
@@ -494,28 +564,24 @@
       font-size: 14.5px;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
+      transition: opacity 0.15s, transform 0.15s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s;
       display: flex;
       align-items: center;
       gap: 7px;
       letter-spacing: -0.01em;
     }
     .btn-refresh svg { width: 15px; height: 15px; }
-    .btn-refresh:hover { opacity: 0.88; }
-    .btn-refresh:active { transform: scale(0.97); }
-    .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-refresh:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 8px 20px var(--shadow); }
+    .btn-refresh:active { transform: scale(0.96); }
+    .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
-    .btn-tinted {
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
+    .btn-tinted { background: var(--accent-soft); color: var(--accent); }
 
     .refresh-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
     .cache-info { font-size: 12.5px; color: var(--subtext); }
 
     .tab-pane { display: none; }
-    .tab-pane.active { display: block; animation: paneIn 0.3s cubic-bezier(0.16,1,0.3,1); }
-    @keyframes paneIn { from { opacity: 0; } to { opacity: 1; } }
+    .tab-pane.active { display: block; }
 
     @media (max-width: 1024px) {
       .summary-grid { grid-template-columns: repeat(3, 1fr); }
@@ -551,7 +617,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.3);
       border-radius: 50%;
       top: 2px; left: 3px;
-      transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
     }
     [data-theme="dark"] .switch-thumb { transform: translateX(21px); background: var(--accent); }
 
@@ -568,9 +634,9 @@
       color: var(--text);
       z-index: 999;
       box-shadow: 0 8px 24px var(--shadow);
-      animation: slideDown 0.4s cubic-bezier(0.16,1,0.3,1), fadeOut 0.4s ease 1.8s forwards;
+      animation: slideDown 0.4s cubic-bezier(0.34,1.56,0.64,1), fadeOut 0.4s ease 1.8s forwards;
     }
-    @keyframes slideDown { from { opacity: 0; transform: translateX(-50%) translateY(-14px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @keyframes slideDown { from { opacity: 0; transform: translateX(-50%) translateY(-16px) scale(0.94); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
     @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
 
     /* ---------- HERO STATS CARD (mobile) ---------- */
@@ -581,16 +647,14 @@
       border-radius: 18px;
       padding: 20px 18px 18px;
       margin-bottom: 16px;
-      animation: heroIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
     }
-    @keyframes heroIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .hero-stats-header h5 { font-size: 12.5px; font-weight: 600; color: var(--hero-label); margin-bottom: 14px; }
     .hero-stats-row { display: flex; justify-content: space-around; align-items: center; gap: 8px; }
     .hero-stat-item { text-align: center; flex: 1; }
     .hero-stat-item .stat-number {
       font-size: clamp(22px, 7vw, 30px);
       font-weight: 700;
-      display: block; line-height: 1.15;
+      display: inline-block; line-height: 1.15;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.02em;
     }
@@ -673,9 +737,9 @@
     <!-- DASHBOARD CONTENT -->
     <div id="dashboardContent" style="display:none;">
 
-      <!-- ACTIVITY RING (signature element) -->
+      <!-- ACTIVITY RING -->
       <div class="ring-row reveal">
-        <div class="ring-wrap">
+        <div class="ring-wrap" id="ringWrap">
           <svg viewBox="0 0 96 96">
             <circle class="ring-track" cx="48" cy="48" r="40"/>
             <circle class="ring-fill" id="ringFill" cx="48" cy="48" r="40"/>
@@ -704,7 +768,7 @@
       <div class="summary-grid reveal" id="semesterSummary"></div>
 
       <!-- HERO STATS (mobile) -->
-      <div class="hero-stats-card" id="heroStatsCard">
+      <div class="hero-stats-card reveal" id="heroStatsCard">
         <div class="hero-stats-header"><h5>Semester overview</h5></div>
         <div class="hero-stats-row">
           <div class="hero-stat-item">
@@ -728,7 +792,7 @@
 
       <!-- SKIP + CALENDAR ROW -->
       <div class="skip-calendar-row reveal" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;">
-        <div class="Skip-card" style="margin-bottom:0;">
+        <div class="Skip-card tilt-card" style="margin-bottom:0;">
           <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.7" fill="currentColor"/></svg>Skip Calculator</h4>
           <div class="Skip-controls">
             <label>Target attendance %</label>
@@ -738,7 +802,7 @@
           <div class="Skip-result" id="skipResult"></div>
         </div>
 
-        <div class="Skip-card" style="margin-bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px;">
+        <div class="Skip-card tilt-card" style="margin-bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px;">
           <div>
             <h4 style="justify-content:center;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Attendance Calendar</h4>
             <p style="color:var(--subtext); font-size:13px; margin-top:2px;">Plan your semester day by day</p>
@@ -787,15 +851,18 @@
     </div>
   </div>
 
-  <!-- GSAP: progressive-enhancement only for the reveal/stagger motion.
-       Loaded from CDN — no npm/build step. Every animation here has a
-       working CSS fallback (the .reveal / .in-view rule above), so the
-       page still animates fine if the CDN is unreachable. -->
+  <!-- GSAP + ScrollTrigger: progressive-enhancement only, for the reveal,
+       ring, and stagger motion. Loaded from CDN — no npm/build step.
+       Every animation below has a working CSS fallback (the .reveal /
+       .in-view-css rule), so the page still animates fine offline. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
   <script>
     const API = "https://nrcm-attendance-api.onrender.com";
     let attendanceData = null;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
     // --- INIT ---
     window.onload = async function() {
@@ -907,6 +974,7 @@
     //     percentage the alert box already uses; does not recompute anything) ---
     function updateRing(pctNum) {
       const fill = document.getElementById('ringFill');
+      const wrap = document.getElementById('ringWrap');
       const pctEl = document.getElementById('ringPct');
       const labelEl = document.getElementById('ringLabel');
       if (!fill) return;
@@ -914,11 +982,45 @@
       const clamped = Math.max(0, Math.min(100, pctNum));
       const offset = circumference - (clamped / 100) * circumference;
       const ok = pctNum >= 75;
-      fill.style.stroke = ok ? 'var(--present)' : pctNum >= 60 ? 'var(--warning)' : 'var(--absent)';
-      requestAnimationFrame(() => { fill.style.strokeDashoffset = offset; });
+      const risky = pctNum >= 60 && pctNum < 75;
+      const color = ok ? 'var(--present)' : risky ? 'var(--warning)' : 'var(--absent)';
+      const glow = ok ? 'var(--present-glow)' : risky ? 'rgba(255,159,10,0.3)' : 'var(--absent-glow)';
+      fill.style.stroke = color;
+      wrap.style.setProperty('--ring-glow-color', glow);
+
+      if (!reducedMotion && typeof gsap !== 'undefined') {
+        gsap.fromTo(wrap, { scale: 0.55, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.65, ease: 'back.out(1.8)' });
+        gsap.to(fill, { strokeDashoffset: offset, duration: 1.2, ease: 'elastic.out(1, 0.8)', delay: 0.1 });
+      } else {
+        wrap.style.opacity = '1';
+        requestAnimationFrame(() => { fill.style.strokeDashoffset = offset; });
+      }
+      wrap.classList.add('pulse');
+
       pctEl.textContent = pctNum.toFixed(0) + '%';
       labelEl.textContent = ok ? 'On Track' : 'At Risk';
     }
+
+    // --- SLIDING TAB INDICATOR (purely decorative, additive) ---
+    function positionTabIndicator(immediate) {
+      const activeTab = document.querySelector('.month-tab.active');
+      const indicator = document.getElementById('tabIndicator');
+      if (!activeTab || !indicator) return;
+      const left = activeTab.offsetLeft;
+      const width = activeTab.offsetWidth;
+      if (immediate) {
+        const prevTransition = indicator.style.transition;
+        indicator.style.transition = 'none';
+        indicator.style.left = left + 'px';
+        indicator.style.width = width + 'px';
+        void indicator.offsetWidth;
+        indicator.style.transition = prevTransition;
+      } else {
+        indicator.style.left = left + 'px';
+        indicator.style.width = width + 'px';
+      }
+    }
+    window.addEventListener('resize', () => positionTabIndicator(true));
 
     // --- RENDER DASHBOARD ---
     function renderDashboard(data) {
@@ -932,15 +1034,15 @@
       const pctNum = parseFloat(pct);
 
       document.getElementById('semesterSummary').innerHTML = `
-        <div class="stat-card">
+        <div class="stat-card tilt-card">
           <h6>Total Present</h6>
           <div class="stat-value text-success" id="animPresent">0</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card tilt-card">
           <h6>Total Classes</h6>
           <div class="stat-value text-primary" id="animTotal">0</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card tilt-card">
           <h6>Overall Percentage</h6>
           <div class="stat-value ${pctNum >= 75 ? 'text-success' : 'text-warning'}" id="animPct">0%</div>
         </div>
@@ -1060,6 +1162,14 @@
         isFirst = false;
       });
 
+      // sliding indicator element, rebuilt fresh each render since tabsContainer was cleared
+      const indicator = document.createElement('div');
+      indicator.className = 'tab-indicator';
+      indicator.id = 'tabIndicator';
+      tabsContainer.appendChild(indicator);
+      positionTabIndicator(true);
+      staggerRows(document.querySelector('.tab-pane.active'));
+
       // Monthly Summary Table (adds a decorative --pct custom property + mini bar;
       // the printed numbers/classes are exactly what the original template produced)
       const tbody = document.getElementById('monthlySummaryBody');
@@ -1077,6 +1187,9 @@
           </td>
         </tr>`;
       }).join('');
+      requestAnimationFrame(() => {
+        document.querySelectorAll('#monthlySummaryBody .pct-cell').forEach(c => c.classList.add('filled'));
+      });
 
       document.getElementById('loadingState').style.display = 'none';
       document.getElementById('dashboardContent').style.display = 'block';
@@ -1089,7 +1202,20 @@
       document.querySelectorAll('.month-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       document.getElementById(`tab-${monthKey}`).classList.add('active');
-      document.getElementById(`pane-${monthKey}`).classList.add('active');
+      const pane = document.getElementById(`pane-${monthKey}`);
+      pane.classList.add('active');
+      positionTabIndicator(false);
+      staggerRows(pane);
+    }
+
+    // additive-only: gentle stagger-in for the rows of whichever pane is now visible
+    function staggerRows(pane) {
+      if (!pane || reducedMotion) return;
+      const rows = pane.querySelectorAll('tbody tr');
+      if (!rows.length) return;
+      if (typeof gsap !== 'undefined') {
+        gsap.fromTo(rows, { opacity: 0, x: -6 }, { opacity: 1, x: 0, duration: 0.3, stagger: Math.min(0.02, 0.3 / rows.length), ease: 'power2.out' });
+      }
     }
 
     // --- SKIP CALCULATOR (math untouched) ---
@@ -1209,7 +1335,7 @@
         const eased = 1 - Math.pow(1 - progress, 3);
         el.textContent = Math.floor(start + range * eased);
         if (progress < 1) requestAnimationFrame(update);
-        else el.textContent = end;
+        else { el.textContent = end; bumpEl(el); }
       }
       requestAnimationFrame(update);
     }
@@ -1225,9 +1351,17 @@
         const eased = 1 - Math.pow(1 - progress, 3);
         el.textContent = (start + range * eased).toFixed(2) + '%';
         if (progress < 1) requestAnimationFrame(update);
-        else el.textContent = end.toFixed(2) + '%';
+        else { el.textContent = end.toFixed(2) + '%'; bumpEl(el); }
       }
       requestAnimationFrame(update);
+    }
+
+    // additive-only micro-flourish when a counter finishes
+    function bumpEl(el) {
+      if (reducedMotion) return;
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
     }
 
     // --- HELPER ---
@@ -1241,31 +1375,53 @@
       } catch { return ''; }
     }
 
-    // --- MOTION: scroll/entrance reveal for section-level cards.
-    //     Pure IntersectionObserver + CSS class toggling (additive, decorative
-    //     only — does not touch any DOM element the calculations depend on). ---
+    // --- MOTION: scroll-triggered blur/rise reveal for section-level cards.
+    //     Additive, decorative only — never touches an element the
+    //     calculations depend on. ---
     function revealSections() {
-      const items = document.querySelectorAll('.reveal:not(.in-view)');
+      const items = document.querySelectorAll('.reveal:not(.gsap-done)');
       if (!items.length) return;
 
-      if (typeof gsap !== 'undefined') {
-        gsap.fromTo(items,
-          { opacity: 0, y: 10 },
-          { opacity: 1, y: 0, duration: 0.5, stagger: 0.07, ease: 'power2.out',
-            onComplete: () => items.forEach(el => el.classList.add('in-view')) }
-        );
+      if (reducedMotion || typeof gsap === 'undefined') {
+        items.forEach(el => el.classList.add('in-view-css', 'gsap-done'));
         return;
       }
 
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('in-view');
-            observer.unobserve(entry.target);
-          }
+      if (typeof ScrollTrigger !== 'undefined') {
+        gsap.registerPlugin(ScrollTrigger);
+        items.forEach((el, i) => {
+          gsap.fromTo(el,
+            { opacity: 0, y: 16, filter: 'blur(6px)' },
+            {
+              opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'power2.out',
+              delay: Math.min(i * 0.05, 0.25),
+              scrollTrigger: { trigger: el, start: 'top 92%', toggleActions: 'play none none none' }
+            }
+          );
         });
-      }, { threshold: 0.1 });
-      items.forEach(el => observer.observe(el));
+      } else {
+        gsap.fromTo(items, { opacity: 0, y: 14, filter: 'blur(6px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.55, stagger: 0.07, ease: 'power2.out' });
+      }
+      items.forEach(el => el.classList.add('gsap-done'));
+    }
+
+    // --- MOTION: cursor-tilt for cards, delegated so it works for
+    //     dynamically-rendered stat cards too. Desktop/fine-pointer only. ---
+    if (hasFinePointer && !reducedMotion) {
+      let tiltEl = null;
+      document.addEventListener('mousemove', (e) => {
+        const card = e.target.closest('.tilt-card');
+        if (card) {
+          tiltEl = card;
+          const rect = card.getBoundingClientRect();
+          const rx = (((e.clientY - rect.top) / rect.height) - 0.5) * -5;
+          const ry = (((e.clientX - rect.left) / rect.width) - 0.5) * 5;
+          card.style.transform = `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
+        } else if (tiltEl) {
+          tiltEl.style.transform = '';
+          tiltEl = null;
+        }
+      });
     }
   </script>
 </body>
