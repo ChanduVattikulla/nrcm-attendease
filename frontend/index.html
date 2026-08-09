@@ -44,6 +44,23 @@
       align-items: center;
       justify-content: center;
       transition: background 0.3s, color 0.3s;
+      /* CHANGE 1: original had no side padding on body, so on narrow phones
+         the card (width:100%) touched both screen edges with zero breathing
+         room. Adding 16px keeps a visible gutter at any viewport width.
+         ORIGINAL: (no padding property existed here) */
+      padding: 16px;
+    }
+
+    /* CHANGE 2 (new block): respect users who've asked for reduced motion.
+       None of this existed in the original — the rotate/glow/float/pulse
+       keyframes ran unconditionally for everyone, which is heavier on
+       mobile batteries/perf and can be uncomfortable for some users. */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
 
     /* Enhanced Theme Toggle */
@@ -306,7 +323,11 @@
       border: 2px solid transparent;
       border-radius: 16px;
       color: var(--text);
-      font-size: 15px;
+      /* CHANGE 3: iOS Safari auto-zooms the page when a focused input's
+         font-size is under 16px. 15px was triggering that on phones,
+         which yanks the layout and feels broken. Bumping to 16px stops it.
+         ORIGINAL: font-size: 15px; */
+      font-size: 16px;
       font-family: 'DM Sans', sans-serif;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       outline: none;
@@ -519,6 +540,75 @@ input:-webkit-autofill:active {
     ::selection {
       background: var(--accent);
       color: white;
+    }
+
+    /* ============================================================
+       CHANGE 4 (new block): actual responsive breakpoints.
+       The original file had ZERO @media queries — everything used
+       one fixed set of paddings/sizes regardless of screen width.
+       These two breakpoints tighten spacing and type size as the
+       viewport shrinks, and move the theme toggle so it never
+       crowds the card on small phones.
+       ============================================================ */
+
+    /* Tablet / small laptop */
+    @media (max-width: 600px) {
+      .card {
+        /* ORIGINAL: padding: 48px 40px; (too wide for small screens) */
+        padding: 36px 28px;
+        border-radius: 24px; /* ORIGINAL: 32px — softened to match smaller card */
+      }
+      .logo {
+        font-size: 26px; /* ORIGINAL: 32px */
+      }
+      .tagline {
+        margin-bottom: 28px; /* ORIGINAL: 40px */
+      }
+      .theme-toggle {
+        top: 16px;   /* ORIGINAL: 24px */
+        right: 16px; /* ORIGINAL: 24px */
+      }
+    }
+
+    /* Small phones */
+    @media (max-width: 380px) {
+      body {
+        padding: 8px; /* tighter gutter than the 16px base for very small screens */
+      }
+      .card {
+        padding: 28px 18px; /* ORIGINAL: 48px 40px */
+        border-radius: 20px;
+      }
+      .logo {
+        font-size: 22px; /* ORIGINAL: 32px */
+      }
+      .tagline {
+        font-size: 13px;   /* ORIGINAL: 14px */
+        margin-bottom: 24px; /* ORIGINAL: 40px */
+      }
+      .tab {
+        padding: 10px 8px; /* ORIGINAL: 12px 16px — tabs were crowding at this width */
+        font-size: 13px;   /* ORIGINAL: 14px */
+      }
+      .btn {
+        padding: 14px 20px; /* ORIGINAL: 16px 24px */
+        font-size: 15px;    /* ORIGINAL: 16px */
+      }
+      .theme-toggle {
+        top: 10px;
+        right: 10px;
+      }
+      .switch-track {
+        width: 52px;  /* ORIGINAL: 64px — scaled down so it doesn't dominate a tiny header */
+        height: 28px; /* ORIGINAL: 32px */
+      }
+      .switch-thumb {
+        width: 20px;  /* ORIGINAL: 24px */
+        height: 20px; /* ORIGINAL: 24px */
+      }
+      [data-theme="dark"] .switch-thumb {
+        transform: translateX(24px); /* ORIGINAL: translateX(32px) — matches smaller track */
+      }
     }
   </style>
 </head>
