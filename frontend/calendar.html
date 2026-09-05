@@ -527,7 +527,7 @@
     // Fixed mandatory holidays — same date every year.
     // Format: 'MM-DD'. Applied every year automatically.
     // Floating holidays (Pongal, Diwali, Ugadi etc.) handled via admin panel.
-    const MANDATORY_HOLIDAYS = new Set([
+        const MANDATORY_HOLIDAYS = new Set([
       '01-26', // Republic Day
       '04-14', // Dr. B.R. Ambedkar Jayanti
       '06-02', // Telangana State Formation Day
@@ -537,12 +537,12 @@
     ]);
 
     const HOLIDAY_NAMES = {
-      '01-26': 'Republic Day',
-      '04-14': 'Dr. B.R. Ambedkar Jayanti',
-      '06-02': 'Telangana State Formation Day',
-      '08-15': 'Independence Day',
-      '10-02': 'Gandhi Jayanti',
-      '12-25': 'Christmas',
+      '01-26': '🇮🇳 Republic Day',
+      '04-14': '🙏 Dr. B.R. Ambedkar Jayanti',
+      '06-02': '🌟 Telangana State Formation Day',
+      '08-15': '🇮🇳 Independence Day',
+      '10-02': '🕊️ Gandhi Jayanti',
+      '12-25': '🎄 Christmas',
     };
 
     let baselinePresent = 0, baselineTotal = 0;
@@ -649,8 +649,8 @@
       const today = new Date(todayISO); today.setHours(0,0,0,0);
       dateObj.setHours(0,0,0,0);
             if (dow === 0) return `<div class="date-cell sunday" data-iso="${iso}">${d}</div>`;
-      const mmdd = iso.slice(5);
-      if (MANDATORY_HOLIDAYS.has(mmdd)) return `<div class="date-cell sunday" data-iso="${iso}" title="${HOLIDAY_NAMES[mmdd]}">🔒</div>`;
+            const mmdd = iso.slice(5);
+      if (MANDATORY_HOLIDAYS.has(mmdd)) return `<div class="date-cell sunday" data-iso="${iso}" onclick="showToast('${HOLIDAY_NAMES[mmdd]}')" style="cursor:pointer;opacity:0.5;">${d}</div>`;
       if (dateObj < today) {
         const s = portalMap[iso];
         const cls = s==='present'?'past-present':s==='absent'?'past-absent':s==='partial'?'past-partial':'past-no-record';
