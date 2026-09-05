@@ -45,7 +45,7 @@
       const data = await res.json();
       const list = document.getElementById('holidayList');
       if (!data.length) { list.innerHTML = '<p style="color:#6B7A9F">No holidays added yet.</p>'; return; }
-      list.innerHTML = data.map(h => `
+      list.innerHTML = [...data].sort((a, b) => a.date.localeCompare(b.date)).map(h => `
         <div class="holiday-item">
           <span><strong>${h.date}</strong> — ${h.reason}</span>
           <button class="del" onclick="deleteHoliday('${h.date}')">Delete</button>
