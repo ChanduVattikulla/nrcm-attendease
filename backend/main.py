@@ -10,6 +10,10 @@ from dotenv import load_dotenv
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+#---IMPORTS FOR ADMIN PANEL---
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from models import Holiday
 
 load_dotenv()
 
@@ -67,6 +71,46 @@ app.include_router(attendance_routes.router, tags=["Attendance"])
 @app.get("/")
 def root():
     return {"message": "NRCM Attendance Tracker API is running!"}
+
+#from models import Holiday
+
+# --- PUBLIC: get all holidays (used by calendar.html) ---
+@app.get("/holidays")
+def get_holidays(db: Session = Depends(get_db)):
+    holidays = db.query(Holiday).all()
+    return [{"date": h.date, "reason": h.reason} for h in holidays]
+
+# --- ADMIN: add a holiday ---
+@app.post("/admin/holiday")
+def add_holiday(request: Request, db: Session = Depends(get_db)):
+    import asyncio
+    body = asyncio.get_event_loop().run_until_complete(request.json())
+    password = body.get("password", "")
+    if password != os.getenv("ADMIN_PASSWORD"):
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+    date = body.get("date")
+    reason = body.get("reason")
+    if not date or not reason:
+        raise HTTPException(status_code=400, detail="Date and reason required")
+    existing = db.query(Holiday).filter(Holiday.date == date).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Holiday already exists for this date")
+    holiday = Holiday(date=date, reason=reason)
+    db.add(holiday)
+    db.commit()
+    return {"message": "Holiday added", "date": date, "reason": reason}
+
+# --- ADMIN: delete a holiday ---
+@app.delete("/admin/holiday/{date}")
+def delete_holiday(date: str, password: str, db: Session = Depends(get_db)):
+    if password != os.getenv("ADMIN_PASSWORD"):
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+    holiday = db.query(Holiday).filter(Holiday.date == date).first()
+    if not holiday:
+        raise HTTPException(status_code=404, detail="Holiday not found")
+    db.delete(holiday)
+    db.commit()
+    return {"message": "Holiday deleted"}
 
 # --- UPTIMEROBOT SIDE-DOOR ---
 # Handle HEAD for UptimeRobot free tier + GET for browser testing

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AttendEase Admin</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; background: #0E1320; color: #ECF0FF; }
+    h2 { color: #5B6AF0; margin-bottom: 24px; }
+    input, textarea { width: 100%; padding: 10px; margin: 8px 0 16px; background: #141928; border: 1px solid #1E2740; border-radius: 8px; color: #ECF0FF; font-size: 14px; box-sizing: border-box; }
+    button { background: #5B6AF0; color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    button.del { background: #F0504A; margin-left: 8px; padding: 6px 14px; font-size: 12px; }
+    .msg { padding: 10px; border-radius: 8px; margin: 12px 0; font-size: 13px; }
+    .success { background: rgba(34,208,122,0.15); color: #22D07A; border: 1px solid #22D07A; }
+    .error { background: rgba(240,80,74,0.15); color: #F0504A; border: 1px solid #F0504A; }
+    .holiday-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #141928; border: 1px solid #1E2740; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+    label { font-size: 13px; color: #6B7A9F; }
+    hr { border-color: #1E2740; margin: 24px 0; }
+  </style>
+</head>
+<body>
+  <h2>🔐 AttendEase Admin</h2>
+
+  <label>Admin Password</label>
+  <input type="password" id="adminPass" placeholder="Enter admin password"/>
+
+  <hr/>
+  <h3 style="margin-bottom:16px;">Add Holiday</h3>
+  <label>Date</label>
+  <input type="date" id="holidayDate"/>
+  <label>Reason</label>
+  <input type="text" id="holidayReason" placeholder="e.g. Ugadi"/>
+  <button onclick="addHoliday()">Add Holiday</button>
+  <div id="addMsg"></div>
+
+  <hr/>
+  <h3 style="margin-bottom:16px;">Existing Holidays</h3>
+  <div id="holidayList">Loading...</div>
+
+  <script>
+    const API = 'https://nrcm-attendance-api.onrender.com';
+
+    async function loadHolidays() {
+      const res = await fetch(`${API}/holidays`);
+      const data = await res.json();
+      const list = document.getElementById('holidayList');
+      if (!data.length) { list.innerHTML = '<p style="color:#6B7A9F">No holidays added yet.</p>'; return; }
+      list.innerHTML = data.map(h => `
+        <div class="holiday-item">
+          <span><strong>${h.date}</strong> — ${h.reason}</span>
+          <button class="del" onclick="deleteHoliday('${h.date}')">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    async function addHoliday() {
+      const password = document.getElementById('adminPass').value;
+      const date = document.getElementById('holidayDate').value;
+      const reason = document.getElementById('holidayReason').value.trim();
+      const msg = document.getElementById('addMsg');
+      if (!date || !reason) { msg.innerHTML = '<div class="msg error">Date and reason are required.</div>'; return; }
+      const res = await fetch(`${API}/admin/holiday`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, date, reason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.innerHTML = `<div class="msg success">✅ ${data.date} added successfully.</div>`;
+        document.getElementById('holidayDate').value = '';
+        document.getElementById('holidayReason').value = '';
+        loadHolidays();
+      } else {
+        msg.innerHTML = `<div class="msg error">❌ ${data.detail}</div>`;
+      }
+    }
+
+    async function deleteHoliday(date) {
+      const password = document.getElementById('adminPass').value;
+      if (!password) { alert('Enter admin password first'); return; }
+      if (!confirm(`Delete holiday on ${date}?`)) return;
+      const res = await fetch(`${API}/admin/holiday/${date}?password=${encodeURIComponent(password)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) loadHolidays();
+      else alert(data.detail);
+    }
+
+    loadHolidays();
+  </script>
+</body>
+</html>

@@ -549,17 +549,32 @@
     let portalMap = {}, portalPeriodMap = {}, planMap = {}, periodPlan = {};
     let todayISO = '', todayAllPosted = false, activePanelDate = null, hasInteracted = false;
 
-    window.onload = async () => {
+    window.onload = async () => 
+    {
       const token = localStorage.getItem('token');
       if (!token) { window.location.href = 'index.html'; return; }
       const now = new Date(); now.setHours(0,0,0,0);
       todayISO = toISO(now);
+      await loadHolidays();
       await loadData();
       document.addEventListener('click', e => {
         if (!activePanelDate) return;
         if (!e.target.closest('.inline-panel') && !e.target.closest('.date-cell') && !e.target.closest('.period-btn') && !e.target.closest('.p3btn')) closePanel();
       });
     };
+
+        async function loadHolidays() {
+      try {
+        const res = await fetch(`${API}/holidays`);
+        const data = await res.json();
+        data.forEach(h => {
+          MANDATORY_HOLIDAYS.add(h.date.slice(5)); // MM-DD
+          HOLIDAY_NAMES[h.date.slice(5)] = h.reason;
+        });
+      } catch(e) {
+        // silently fail — calendar still works with hardcoded holidays
+      }
+    }
 
     async function loadData() {
       try {

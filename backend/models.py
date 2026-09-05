@@ -32,3 +32,13 @@ class AttendanceCache(Base):
     roll_number = Column(String, index=True, nullable=False)
     data = Column(Text, nullable=False)  # stores full attendance JSON as text
     scraped_at = Column(DateTime, default=func.now())  # when was it last scraped
+#for admin panel
+# --- HOLIDAYS TABLE ---
+# Admin-managed holidays (floating holidays that change date every year)
+class Holiday(Base):
+    __tablename__ = "holidays"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(String, unique=True, nullable=False)  # format: YYYY-MM-DD
+    reason = Column(String, nullable=False)
+    created_at = Column(DateTime, default=func.now())
