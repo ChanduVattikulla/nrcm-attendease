@@ -522,7 +522,28 @@
     const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const PERIODS = ['P1','P2','P3','P4','P5','P6'];
-    const USER_TARGET = 75;
+        const USER_TARGET = 75;
+
+    // Fixed mandatory holidays — same date every year.
+    // Format: 'MM-DD'. Applied every year automatically.
+    // Floating holidays (Pongal, Diwali, Ugadi etc.) handled via admin panel.
+    const MANDATORY_HOLIDAYS = new Set([
+      '01-26', // Republic Day
+      '04-14', // Dr. B.R. Ambedkar Jayanti
+      '06-02', // Telangana State Formation Day
+      '08-15', // Independence Day
+      '10-02', // Gandhi Jayanti
+      '12-25', // Christmas
+    ]);
+
+    const HOLIDAY_NAMES = {
+      '01-26': 'Republic Day',
+      '04-14': 'Dr. B.R. Ambedkar Jayanti',
+      '06-02': 'Telangana State Formation Day',
+      '08-15': 'Independence Day',
+      '10-02': 'Gandhi Jayanti',
+      '12-25': 'Christmas',
+    };
 
     let baselinePresent = 0, baselineTotal = 0;
     let portalMap = {}, portalPeriodMap = {}, planMap = {}, periodPlan = {};
@@ -627,7 +648,9 @@
       const d = dateObj.getDate(), dow = dateObj.getDay();
       const today = new Date(todayISO); today.setHours(0,0,0,0);
       dateObj.setHours(0,0,0,0);
-      if (dow === 0) return `<div class="date-cell sunday" data-iso="${iso}">${d}</div>`;
+            if (dow === 0) return `<div class="date-cell sunday" data-iso="${iso}">${d}</div>`;
+      const mmdd = iso.slice(5);
+      if (MANDATORY_HOLIDAYS.has(mmdd)) return `<div class="date-cell sunday" data-iso="${iso}" title="${HOLIDAY_NAMES[mmdd]}">🔒</div>`;
       if (dateObj < today) {
         const s = portalMap[iso];
         const cls = s==='present'?'past-present':s==='absent'?'past-absent':s==='partial'?'past-partial':'past-no-record';
@@ -653,7 +676,8 @@
       if (todayAllPosted) check.setDate(check.getDate()+1);
       while (check < target) {
         const cISO = toISO(check);
-        if (check.getDay() !== 0) {
+                const checkMMDD = toISO(check).slice(5);
+        if (check.getDay() !== 0 && !MANDATORY_HOLIDAYS.has(checkMMDD)) {
           if (!planMap[cISO]) return false;
           if (planMap[cISO] === 'partial') {
             const states = periodPlan[cISO] || {};
