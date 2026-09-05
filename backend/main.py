@@ -14,6 +14,7 @@ from slowapi.errors import RateLimitExceeded
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from models import Holiday
+from database import get_db
 
 load_dotenv()
 
