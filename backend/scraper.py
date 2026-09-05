@@ -26,7 +26,13 @@ def get_attendance(roll_no, password):
 
     login_response = session.post(LOGIN_URL, data=payload)
 
-    if "index.php" not in login_response.url:
+    # Detect login failure by checking if we're still on the login page
+    # (wrong credentials keep you on login.php with an error message).
+    # We do NOT check for a specific success URL because the portal may
+    # redirect different accounts to slightly different pages.
+    final_url = login_response.url
+    response_text = login_response.text
+    if "login.php" in final_url or "invalid" in response_text.lower() or "incorrect" in response_text.lower():
         raise Exception("Invalid credentials. Please check your roll number and password.")
 
     # --- FETCH ATTENDANCE PAGE ---
