@@ -18,6 +18,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 CACHE_HOURS = int(os.getenv("CACHE_HOURS", 4))
 
+# IST offset — Render servers run UTC, but our college-hours/night-window
+# rules are defined in IST (UTC+5:30). Must convert explicitly.
+IST_OFFSET = timedelta(hours=5, minutes=30)
+
 # Get current student from token
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     roll_number = verify_token(token)
@@ -29,14 +33,10 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 # --- GET ATTENDANCE (with cache) ---
-# NOTE: This endpoint's behavior is intentionally UNCHANGED by the
-# Force Refresh restrictions. Even if the cache has expired and this
-# triggers a fresh scrape, that's existing CACHE_HOURS behavior and is
-# not subject to the college-hours/night-window rules — those rules
-# apply ONLY to the explicit /attendance/refresh button below.
+# No refresh_guard here — normal page loads always use cache.
+# Guard applies ONLY to the explicit Force Refresh button below.
 @router.get("/attendance")
 def get_attendance(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Check if cached data exists and is fresh
     cache = db.query(AttendanceCache).filter(
         AttendanceCache.roll_number == current_user.roll_number
     ).first()
@@ -47,23 +47,23 @@ def get_attendance(current_user: User = Depends(get_current_user), db: Session =
             return {
                 "roll_number": current_user.roll_number,
                 "data": json.loads(cache.data),
-                "scraped_at": str(cache.scraped_at), # remove + timedelta(...)
+                "scraped_at": str(cache.scraped_at),
                 "from_cache": True
             }
 
-    # Cache is old or doesn't exist — scrape fresh data
-    # (no refresh_guard check here — see note above)
     return fetch_fresh_attendance(current_user, db)
 
 # --- FORCE REFRESH ---
-# This is the ONLY endpoint subject to the college-hours/night-window
-# restrictions. See refresh_guard.py for the full rule definitions.
+# This is the ONLY endpoint with refresh_guard restrictions.
+# College hours (Mon-Sat 9:30-16:30): 60-min rolling cooldown.
+# Night window: one refresh per window.
 @router.get("/attendance/refresh")
 def refresh_attendance(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    now = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).replace(tzinfo=None)  # naive local time — server is expected to run in IST
+    # Convert server UTC time to IST before checking windows
+    now_ist = (datetime.now(timezone.utc) + IST_OFFSET).replace(tzinfo=None)
 
     decision = check_refresh_allowed(
-        now=now,
+        now=now_ist,
         college_last_refresh_at=current_user.college_last_refresh_at,
         night_window_used_key=current_user.night_window_used_key,
     )
@@ -71,15 +71,8 @@ def refresh_attendance(current_user: User = Depends(get_current_user), db: Sessi
     if not decision.allowed:
         raise HTTPException(status_code=429, detail=decision.reason)
 
-    # Atomically claim this refresh BEFORE scraping, so two concurrent
-    # requests (e.g. two browser tabs) can't both pass the check above
-    # and both proceed. Whichever request's UPDATE actually matches a
-    # row wins; the loser sees rowcount == 0 and is rejected.
-    #
-    # We build the WHERE clause based on the window type so the
-    # condition exactly mirrors what check_refresh_allowed() just
-    # verified — this prevents a race where the state changed between
-    # the check and this update.
+    # Atomically claim the refresh slot BEFORE scraping to prevent
+    # race conditions (two tabs clicking refresh at the same time).
     if decision.window_type == "college_hours":
         result = db.execute(
             User.__table__.update()
@@ -88,9 +81,9 @@ def refresh_attendance(current_user: User = Depends(get_current_user), db: Sessi
                 (User.college_last_refresh_at.is_(None))
                 | (User.college_last_refresh_at == current_user.college_last_refresh_at)
             )
-            .values(college_last_refresh_at=now)
+            .values(college_last_refresh_at=now_ist)
         )
-    else:  # night
+    else:  # night window
         result = db.execute(
             User.__table__.update()
             .where(User.id == current_user.id)
@@ -103,8 +96,7 @@ def refresh_attendance(current_user: User = Depends(get_current_user), db: Sessi
     db.commit()
 
     if result.rowcount == 0:
-        # Someone else (another tab/request) claimed this refresh slot
-        # first, in the brief window between our check and our update.
+        # Another tab/request claimed this slot first
         raise HTTPException(
             status_code=429,
             detail="Another request already used this refresh. Please try again later.",
@@ -114,7 +106,6 @@ def refresh_attendance(current_user: User = Depends(get_current_user), db: Sessi
 
 # --- SHARED SCRAPING LOGIC ---
 def fetch_fresh_attendance(current_user: User, db: Session):
-    # Scrape fresh data
     try:
         from auth import decrypt_password
         plain_password = decrypt_password(current_user.scraper_password)
@@ -122,7 +113,6 @@ def fetch_fresh_attendance(current_user: User, db: Session):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}")
 
-    # Save or update cache
     cache = db.query(AttendanceCache).filter(
         AttendanceCache.roll_number == current_user.roll_number
     ).first()
@@ -139,10 +129,10 @@ def fetch_fresh_attendance(current_user: User, db: Session):
         db.add(cache)
 
     db.commit()
-    
+
     return {
         "roll_number": current_user.roll_number,
         "data": data,
-        "scraped_at": str(datetime.now(timezone.utc)),   # remove + timedelta(...)
+        "scraped_at": str(datetime.now(timezone.utc)),
         "from_cache": False
     }
