@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -83,9 +83,8 @@ def get_holidays(db: Session = Depends(get_db)):
 
 # --- ADMIN: add a holiday ---
 @app.post("/admin/holiday")
-def add_holiday(request: Request, db: Session = Depends(get_db)):
-    import asyncio
-    body = asyncio.get_event_loop().run_until_complete(request.json())
+async def add_holiday(request: Request, db: Session = Depends(get_db)):
+    body = await request.json()
     password = body.get("password", "")
     if password != os.getenv("ADMIN_PASSWORD"):
         raise HTTPException(status_code=403, detail="Invalid admin password")
