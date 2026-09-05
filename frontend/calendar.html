@@ -663,9 +663,16 @@
       const d = dateObj.getDate(), dow = dateObj.getDay();
       const today = new Date(todayISO); today.setHours(0,0,0,0);
       dateObj.setHours(0,0,0,0);
-            if (dow === 0) return `<div class="date-cell sunday" data-iso="${iso}">${d}</div>`;
+            if (dow === 0) {
+  const todayClass = iso === todayISO ? ' today-ring' : '';
+  return `<div class="date-cell sunday${todayClass}" data-iso="${iso}">${d}</div>`;
+}
             const mmdd = iso.slice(5);
-      if (MANDATORY_HOLIDAYS.has(mmdd)) return `<div class="date-cell sunday" data-iso="${iso}" onclick="showToast('${HOLIDAY_NAMES[mmdd]}')" style="cursor:pointer;opacity:0.5;">${d}</div>`;
+      if (MANDATORY_HOLIDAYS.has(mmdd)) {
+  const todayClass = iso === todayISO ? ' today-ring' : '';
+  const holidayOpacity = iso === todayISO ? '1' : '0.5';
+  return `<div class="date-cell sunday${todayClass}" data-iso="${iso}" onclick="showToast('${HOLIDAY_NAMES[mmdd]}')" style="cursor:pointer;opacity:${holidayOpacity};">${d}</div>`;
+}
       if (dateObj < today) {
         const s = portalMap[iso];
         const cls = s==='present'?'past-present':s==='absent'?'past-absent':s==='partial'?'past-partial':'past-no-record';
