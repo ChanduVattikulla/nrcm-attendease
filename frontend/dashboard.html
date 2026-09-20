@@ -840,17 +840,31 @@ border-color: var(--glass-border);
       <div class="roll-badge" id="rollDisplay">Loading...</div>
      <div class="theme-switch" onclick="toggleTheme()">
   <div class="switch-track">
-    <span class="switch-icon sun">🌤️</span>
-    <span class="switch-icon moon">🌙</span>
+    <span class="switch-icon sun">☀</span>
+<span class="switch-icon moon">☾</span>
     <div class="switch-thumb" id="switchThumb"></div>
   </div>
 </div>
-      <button class="btn-icon" onclick="confirmLogout()" title="Logout">🚶‍➡️</button>
-      <div id="logoutConfirm" style="display:none; position:absolute; top:60px; right:24px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; z-index:999; text-align:center; min-width:200px;">
-  <p style="font-size:13px; margin-bottom:12px;">Sure you want to leave? 👀</p>
+      <button class="btn-icon" onclick="confirmLogout()" title="Logout">⇥</button>
+
+<div id="logoutConfirm" style="display:none; position:absolute; top:60px; right:24px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; z-index:999; text-align:center; min-width:200px;">
+  
+  <p style="font-size:13px; margin-bottom:12px;">
+    Are you sure you want to log out?
+  </p>
+
   <div style="display:flex; gap:8px; justify-content:center;">
-    <button onclick="logout()" style="background:#ef4444; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600;">I'm Out 🚶‍➡️</button>
-    <button onclick="document.getElementById('logoutConfirm').style.display='none'" style="background:var(--surface); color:var(--text); border:1px solid var(--border); padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600;">Stay 😅</button>
+    
+    <button onclick="logout()" style="background:#ef4444; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600;">
+      ⇥ Log out
+    </button>
+
+    <button onclick="document.getElementById('logoutConfirm').style.display='none'" style="background:var(--surface); color:var(--text); border:1px solid var(--border); padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600;">
+      Cancel
+    </button>
+
+  </div>
+</div>
   </div>
 </div>
     </div>
@@ -895,7 +909,7 @@ border-color: var(--glass-border);
       <div class="refresh-bar">
         <div class="cache-info" id="cacheInfo"></div>
         <button class="btn-refresh" id="refreshBtn" onclick="forceRefresh()">
-          🔄 Force Refresh
+          ↻ Refresh attendance
         </button>
       </div>
 
@@ -1077,7 +1091,7 @@ function toggleTheme() {
             // Dashboard already has valid data on screen — don't replace
             // it, just tell the user via the cache-info line.
             document.getElementById('cacheInfo').innerHTML =
-              `⚠️ <strong>${message}</strong>`;
+              `⚠︎ <strong>${message}</strong>`;
           }
           return;
         }
@@ -1089,9 +1103,9 @@ function toggleTheme() {
         const fromCache = result.from_cache;
         	const scrapedAt = new Date(result.scraped_at + 'Z');
        const timeStr = scrapedAt.toLocaleTimeString();
-document.getElementById('cacheInfo').innerHTML = fromCache
-  ? `⚡ Last updated at 🕐 <strong>${timeStr}</strong> — click Force Refresh for latest data`
-  : `✅ Attendance updated at 🕐 <strong>${timeStr}</strong>`;
+      document.getElementById('cacheInfo').innerHTML = fromCache
+      ? `◷ Last synced: <strong>${timeStr}</strong> — use Refresh attendance for latest data`
+      : `✓ Attendance updated: <strong>${timeStr}</strong>`;
       renderDashboard(attendanceData);
 
       } catch(e) {
@@ -1100,7 +1114,7 @@ document.getElementById('cacheInfo').innerHTML = fromCache
             <p style="color:var(--absent)">❌ Failed to load attendance. Is the server running?</p>`;
         } else {
           document.getElementById('cacheInfo').innerHTML =
-            `⚠️ <strong>Could not reach server. Please try again.</strong>`;
+            `⚠︎ <strong>Could not reach server. Please try again.</strong>`;
         }
       }
     }
@@ -1113,7 +1127,7 @@ document.getElementById('cacheInfo').innerHTML = fromCache
       btn.textContent = '⏳ Refreshing...';
       await loadAttendance(true);
       btn.disabled = false;
-      btn.textContent = '🔄 Force Refresh';
+      btn.textContent = '↻ Refresh attendance';
     }
 
     // --- RENDER DASHBOARD ---
@@ -1391,13 +1405,13 @@ const target = rawValue === '' ? 75 : parseInt(rawValue);
       result.style.background = 'var(--warning-bg)';
       result.style.border = '1px solid var(--warning-border)';
       result.style.color = 'var(--warning-text)';
-      result.innerHTML = `⚠️ You cannot skip any more classes to maintain <strong>${target}%</strong>.`;
+      result.innerHTML = `⚠︎ You cannot skip any more classes to maintain <strong>${target}%</strong>.`;
     } else {
       result.style.background = 'var(--success-bg)';
       result.style.border = '1px solid var(--success-border)';
       result.style.color = 'var(--success-text)';
      const newPct = ((present) / (total + canSkipClasses) * 100).toFixed(2);
-result.innerHTML = `✅ You can skip <strong>${dayText}${connector}${classText}</strong> — your attendance stays at <strong>${newPct}%</strong>`;
+result.innerHTML = `✓ You can skip <strong>${dayText}${connector}${classText}</strong> — your attendance stays at <strong>${newPct}%</strong>`;
     }
 
   } else {
@@ -1418,7 +1432,7 @@ result.innerHTML = `✅ You can skip <strong>${dayText}${connector}${classText}<
     result.style.background = 'var(--warning-bg)';
     result.style.border = '1px solid var(--warning-border)';
     result.style.color = 'var(--warning-text)';
-    result.innerHTML = `❌ You need to attend ${dayText}${connector}${classText} to reach <strong>${target}%</strong>.`;
+    result.innerHTML = `ⓘ You need to attend ${dayText}${connector}${classText} to reach <strong>${target}%</strong>.`;
   }
 }
   function animateCounter(id, start, end, duration) {
