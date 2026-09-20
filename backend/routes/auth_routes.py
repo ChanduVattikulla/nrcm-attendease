@@ -20,10 +20,15 @@ def verify_nrcm_credentials(roll_number: str, password: str) -> bool:
     try:
         LOGIN_URL = "https://www.nrcmec.org/Student/login.php"
         session = requests.Session()
-        response = session.get(LOGIN_URL, timeout=10)
+        session.get(LOGIN_URL, timeout=10)
         payload = {"roll_no": roll_number, "password": password}
         login_response = session.post(LOGIN_URL, data=payload, timeout=10)
-        return "index.php" in login_response.url
+        final_url = login_response.url
+        response_text = login_response.text
+        # Failed login keeps you on login.php or shows error keywords
+        if "login.php" in final_url or "invalid" in response_text.lower() or "incorrect" in response_text.lower():
+            return False
+        return True
     except:
         return False
 

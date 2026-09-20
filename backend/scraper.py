@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+import time
 
 LOGIN_URL = "https://www.nrcmec.org/Student/login.php"
 ATTENDANCE_URL = "https://www.nrcmec.org/Student/Date_wise_attendance"
@@ -35,17 +36,24 @@ def get_attendance(roll_no, password):
     if "login.php" in final_url or "invalid" in response_text.lower() or "incorrect" in response_text.lower():
         raise Exception("Invalid credentials. Please check your roll number and password.")
 
-    # --- FETCH ATTENDANCE PAGE ---
+    # --- FETCH ATTENDANCE PAGE (with one retry) ---
+    # The portal sometimes returns the page before tab content is ready.
+    # One retry after a short wait fixes this reliably.
     att_response = session.get(ATTENDANCE_URL)
     if "login" in att_response.url:
         raise Exception("Session did not persist after login.")
 
     att_soup = BeautifulSoup(att_response.text, "html.parser")
-
-    # --- PARSE ALL MONTH TABS ---
     tab_content = att_soup.find("div", id="monthTabsContent")
+
     if not tab_content:
-        raise Exception("Could not find attendance tab content on the page.")
+        # Retry once after a brief pause
+        time.sleep(2)
+        att_response = session.get(ATTENDANCE_URL)
+        att_soup = BeautifulSoup(att_response.text, "html.parser")
+        tab_content = att_soup.find("div", id="monthTabsContent")
+        if not tab_content:
+            raise Exception("Could not find attendance tab content on the page.")
 
     tab_panes = tab_content.find_all("div", class_="tab-pane")
     if not tab_panes:
