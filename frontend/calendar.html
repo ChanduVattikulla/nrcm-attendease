@@ -418,7 +418,517 @@
     flex: 0 1 auto;           /* ← allow title to shrink */
   }
 }
-  </style>
+
+    /* ── RANGE PLANNER STYLES ── */
+    .month-header {
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: nowrap !important;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, var(--surface-light), transparent);
+      border-radius: 32px 32px 0 0;
+      min-width: 0;
+    }
+    .month-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, var(--text), var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap !important;
+      flex-shrink: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .month-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-shrink: 0;
+      white-space: nowrap !important;
+    }
+    .month-planned-tag {
+      font-size: 0.68rem;
+      color: var(--accent);
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      white-space: nowrap !important;
+      flex-shrink: 0;
+      line-height: 1.2;
+    }
+    .month-range-btn {
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.2rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      white-space: nowrap !important;
+      flex-shrink: 0;
+      line-height: 1.2;
+      transition: all 0.15s ease;
+    }
+    .month-range-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: var(--accent-glow);
+    }
+    .panel-extra-actions {
+      margin-top: 0.85rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--border);
+    }
+    .panel-range-btn {
+      width: 100%;
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .panel-range-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: var(--accent-glow);
+    }
+
+    /* Modal Backdrop */
+    .range-modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 9990;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .range-modal-backdrop.show { display: flex; }
+
+    /* Modal Window — Large, spacious & professional on desktop */
+    .range-modal {
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: rangeModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes rangeModalIn {
+      from { opacity: 0; transform: scale(0.96) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .range-modal-header {
+      padding: 1rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-light);
+    }
+    .range-modal-title-box { display: flex; flex-direction: column; }
+    .range-modal-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .range-modal-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+    .range-modal-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .range-modal-close:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .range-modal-body {
+      padding: 1.25rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Range Selected Pill Display */
+    .range-selection-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.6rem 0.9rem;
+      gap: 0.5rem;
+    }
+    .range-date-pill-block {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .range-date-pill-block.text-right {
+      align-items: flex-end;
+    }
+    .range-pill-label {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+    }
+    .range-pill-val {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .range-pill-arrow {
+      color: var(--accent);
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 0 0.2rem;
+    }
+
+    /* Mini Calendar Controls */
+    .range-cal-wrap {
+      border: 1px solid var(--border);
+      background: var(--surface-light);
+      border-radius: 14px;
+      padding: 0.85rem;
+    }
+    .range-cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+    }
+    .range-cal-month-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.3px;
+    }
+    .range-cal-nav-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .range-cal-nav-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .range-cal-nav-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    /* Mini Calendar Day Headers & Grid */
+    .range-cal-grid-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+    }
+    .range-cal-days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      row-gap: 4px;
+    }
+    .range-day-cell {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      transition: background 0.15s, color 0.15s;
+      border-radius: 8px;
+      color: var(--text);
+    }
+    .range-day-cell:hover:not(.disabled) {
+      background: var(--accent-glow);
+      color: var(--accent);
+    }
+    .range-day-cell.empty {
+      cursor: default;
+      background: transparent !important;
+    }
+    .range-day-cell.disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+      color: var(--text-secondary);
+    }
+    .range-day-cell.sunday {
+      color: var(--absent);
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .range-day-cell.holiday {
+      color: var(--holiday);
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    /* Selection styles */
+    .range-day-cell.in-range {
+      background: var(--accent-glow) !important;
+      color: var(--accent) !important;
+      border-radius: 0;
+    }
+    .range-day-cell.range-start {
+      background: var(--accent) !important;
+      color: #fff !important;
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .range-day-cell.range-end {
+      background: var(--accent) !important;
+      color: #fff !important;
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    .range-day-cell.range-start.range-end {
+      border-radius: 10px !important;
+    }
+
+    /* Quick Presets Row */
+    .range-presets-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .range-presets-title {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .range-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .range-chip:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: var(--accent-glow);
+    }
+
+    /* Status Segmented Control */
+    .range-seg-wrap { display: flex; flex-direction: column; gap: 0.35rem; }
+    .range-seg-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .range-segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .range-seg-btn {
+      padding: 0.55rem 0.5rem;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .range-seg-btn:hover { color: var(--text); }
+    .range-seg-btn.selected-present {
+      background: var(--present);
+      color: #fff;
+      font-weight: 600;
+    }
+    .range-seg-btn.selected-absent {
+      background: var(--absent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .range-seg-btn.selected-holiday {
+      background: var(--holiday);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Confirmation Box */
+    .range-summary-card {
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 0.95rem;
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+    .range-summary-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-secondary);
+    }
+    .range-summary-row strong { color: var(--text); }
+    .range-summary-status {
+      margin-top: 0.35rem;
+      padding-top: 0.35rem;
+      border-top: 1px solid var(--border);
+      font-weight: 600;
+    }
+    .range-summary-error {
+      color: var(--absent);
+      font-weight: 500;
+    }
+
+    /* Footer */
+    .range-modal-footer {
+      padding: 0.85rem 1.4rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.6rem;
+      background: var(--surface-light);
+    }
+    .range-btn-secondary {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .range-btn-secondary:hover { color: var(--text); border-color: var(--text-secondary); }
+    .range-btn-primary {
+      padding: 0.5rem 1.3rem;
+      border-radius: 8px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .range-btn-primary:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+    .range-btn-primary:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      .range-modal { border-radius: 16px; }
+      .range-modal-header { padding: 0.85rem 1rem; }
+      .range-modal-body { padding: 1rem; gap: 0.85rem; }
+      .range-day-cell { height: 34px; font-size: 0.78rem; }
+      .range-modal-footer { padding: 0.75rem 1rem; }
+      .month-header {
+        padding: 0.75rem 1rem !important;
+        flex-wrap: nowrap !important;
+        gap: 0.4rem !important;
+      }
+      .month-name {
+        font-size: 0.85rem !important;
+        white-space: nowrap !important;
+      }
+      .month-header-actions {
+        gap: 0.3rem !important;
+        flex-shrink: 0 !important;
+      }
+      .month-planned-tag {
+        font-size: 0.62rem !important;
+        padding: 0.15rem 0.5rem !important;
+      }
+      .month-range-btn {
+        font-size: 0.65rem !important;
+        padding: 0.18rem 0.5rem !important;
+      }
+    }
+    @media (max-width: 400px) {
+      .month-name { font-size: 0.78rem !important; }
+      .month-planned-tag { font-size: 0.6rem !important; padding: 0.12rem 0.4rem !important; }
+      .month-range-btn { font-size: 0.62rem !important; padding: 0.14rem 0.42rem !important; }
+    }
+</style>
 </head>
 <body>
 
@@ -513,6 +1023,80 @@
     </div>
     <div class="months-wrapper" id="monthsWrapper">
       <div style="text-align:center;padding:60px;color:var(--text-secondary)">📅 Loading planner...</div>
+    </div>
+  </div>
+
+
+  <!-- RANGE PLANNER MODAL -->
+  <div class="range-modal-backdrop" id="rangeModalBackdrop" onclick="closeRangeModal(event)">
+    <div class="range-modal" id="rangeModal" onclick="event.stopPropagation()">
+      <div class="range-modal-header">
+        <div class="range-modal-title-box">
+          <span class="range-modal-title">Range Planner</span>
+          <span class="range-modal-sub">Click start and end date on calendar</span>
+        </div>
+        <button type="button" class="range-modal-close" onclick="closeRangeModal()" title="Close">✕</button>
+      </div>
+
+      <div class="range-modal-body">
+        <!-- Selected Dates Bar -->
+        <div class="range-selection-bar">
+          <div class="range-date-pill-block">
+            <span class="range-pill-label">Start Date</span>
+            <span class="range-pill-val" id="rangeDisplayStart">—</span>
+          </div>
+          <span class="range-pill-arrow">→</span>
+          <div class="range-date-pill-block text-right">
+            <span class="range-pill-label">End Date</span>
+            <span class="range-pill-val" id="rangeDisplayEnd">—</span>
+          </div>
+        </div>
+
+        <!-- Presets Row -->
+        <div class="range-presets-row">
+          <span class="range-presets-title">Presets:</span>
+          <button type="button" class="range-chip" onclick="applyRangePreset(7)">+1 Week</button>
+          <button type="button" class="range-chip" onclick="applyRangePreset(14)">+2 Weeks</button>
+          <button type="button" class="range-chip" onclick="applyRangePreset('month')">End of Month</button>
+        </div>
+
+        <!-- Interactive Visual Calendar -->
+        <div class="range-cal-wrap">
+          <div class="range-cal-nav">
+            <button type="button" class="range-cal-nav-btn" id="rangeCalPrevBtn" onclick="changeRangeCalMonth(-1)">◀</button>
+            <span class="range-cal-month-title" id="rangeCalMonthTitle">—</span>
+            <button type="button" class="range-cal-nav-btn" id="rangeCalNextBtn" onclick="changeRangeCalMonth(1)">▶</button>
+          </div>
+          <div class="range-cal-grid-header">
+            <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+          </div>
+          <div class="range-cal-days-grid" id="rangeCalDaysGrid">
+            <!-- Day cells rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Attendance Status -->
+        <div class="range-seg-wrap">
+          <span class="range-seg-label">Attendance Status</span>
+          <div class="range-segmented">
+            <button type="button" class="range-seg-btn selected-present" id="rangeOpt-present" onclick="selectRangeStatus('present')">Present</button>
+            <button type="button" class="range-seg-btn" id="rangeOpt-absent" onclick="selectRangeStatus('absent')">Absent</button>
+            <button type="button" class="range-seg-btn" id="rangeOpt-holiday" onclick="selectRangeStatus('holiday')">Holiday</button>
+          </div>
+        </div>
+
+        <!-- Confirmation Summary -->
+        <div class="range-summary-card" id="rangePreviewBox">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <div class="range-modal-footer">
+        <button type="button" class="range-btn-secondary" onclick="closeRangeModal()">Cancel</button>
+        <button type="button" class="range-btn-primary" id="rangeApplyBtn" onclick="applyRangePlan()">
+          Apply Plan
+        </button>
+      </div>
     </div>
   </div>
 
@@ -638,6 +1222,13 @@
       const plannedCnt = Object.keys(planMap).filter(d => d.startsWith(prefix)).length;
       const tag = plannedCnt > 0 ? `<span class="month-planned-tag">${plannedCnt} planned</span>` : '';
 
+      const lastDayOfMonth = new Date(year, month + 1, 0);
+      lastDayOfMonth.setHours(23, 59, 59, 999);
+      const todayDate = new Date(todayISO);
+      todayDate.setHours(0, 0, 0, 0);
+      const isPlannableMonth = lastDayOfMonth >= todayDate;
+      const rangeBtn = isPlannableMonth ? `<button type="button" class="month-range-btn" onclick="openRangeModalForMonth('${prefix}')" title="Plan date range">Range</button>` : '';
+
       // Build cells array
       let allCells = [];
       for (let i = 0; i < firstDay; i++) allCells.push(`<div class="date-cell empty"></div>`);
@@ -652,7 +1243,10 @@
       }
 
       return `<div class="month-card" id="mc-${prefix}">
-        <div class="month-header"><span class="month-name">${MONTHS[month]} ${year}</span>${tag}</div>
+        <div class="month-header">
+          <span class="month-name">${MONTHS[month]} ${year}</span>
+          <div class="month-header-actions">${tag}${rangeBtn}</div>
+        </div>
         <div class="cal-grid">
           <div class="day-headers">${DAY_LABELS.map((l,i)=>`<div class="day-header ${i===0?'sunday':''}">${l}</div>`).join('')}</div>
           <div class="dates-grid" id="dg-${prefix}">${weeksHTML}</div>
@@ -770,6 +1364,11 @@
           <button class="panel-opt ${cur==='absent'?'sel-absent':''}"   ${disabledAttr} onclick="${hasMidDay?'':` selectFull('${iso}','absent')`}">❌ Full Absent</button>
           <button class="panel-opt ${cur==='partial'?'sel-partial':''}" onclick="selectPartialOption('${iso}')">⚡ Partial</button>
           <button class="panel-opt ${cur==='holiday'?'sel-holiday':''}" ${disabledAttr} onclick="${hasMidDay?'':` selectFull('${iso}','holiday')`}">🏖️ Holiday</button>
+        </div>
+        <div class="panel-extra-actions">
+          <button type="button" class="panel-range-btn" onclick="openRangeModalFromDate('${iso}')">
+            Plan range from this date →
+          </button>
         </div>
         ${clearBtn}
         ${periodsHTML}`;
@@ -1063,6 +1662,443 @@
     }
     // ── Navbar shrink-on-scroll + dynamic content offset (all screen sizes) ──
     
+
+    // ── RANGE PLANNER LOGIC (VISUAL MINI-CALENDAR) ──
+    let selectedRangeStatus = 'present';
+    let rangeStartDate = null;
+    let rangeEndDate = null;
+    let rangeCalCurrentYear = 2026;
+    let rangeCalCurrentMonth = 9; // 0-indexed (9 = Oct)
+    const WEEKDAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    function formatDateShort(iso) {
+      if (!iso) return '';
+      const [y, m, d] = iso.split('-');
+      return `${parseInt(d)} ${MONTHS[parseInt(m)-1].slice(0,3)}`;
+    }
+
+    // Finds the very first working day from today that is NOT yet planned
+    function getEarliestPlannableDate() {
+      let cur = new Date(todayISO);
+      cur.setHours(0,0,0,0);
+      if (todayAllPosted) cur.setDate(cur.getDate() + 1);
+      while (true) {
+        const iso = toISO(cur);
+        const mmdd = iso.slice(5);
+        const isSun = cur.getDay() === 0;
+        const isHol = MANDATORY_HOLIDAYS.has(mmdd);
+        if (!isSun && !isHol && !planMap[iso]) {
+          return iso;
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+
+    function openRangeModalFromDate(iso) {
+      closePanel();
+      openRangeModal(iso);
+    }
+
+    function openRangeModalForMonth(prefix) {
+      // Start from the earliest uncompleted plannable date to guarantee NO broken gaps
+      const earliest = getEarliestPlannableDate();
+      let startIso = earliest;
+      // If earliest is already past this month, use 1st of month (if unlocked)
+      if (earliest < `${prefix}-01`) {
+        startIso = `${prefix}-01`;
+      }
+      openRangeModal(startIso);
+    }
+
+    function openRangeModal(startIso) {
+      const backdrop = document.getElementById('rangeModalBackdrop');
+      if (!backdrop) return;
+
+      const earliest = getEarliestPlannableDate();
+
+      // If requested startIso would leave an unplanned gap between today and startIso,
+      // enforce starting from earliest uncompleted date so attendance math is never broken!
+      let effectiveStart = (startIso && startIso <= earliest) ? startIso : earliest;
+      if (startIso && planMap[startIso]) {
+        // If clicking on an already planned date to re-plan from there, allow it
+        effectiveStart = startIso;
+      }
+
+      rangeStartDate = effectiveStart;
+
+      // Default end date is 6 days after start
+      const dObj = new Date(effectiveStart);
+      dObj.setDate(dObj.getDate() + 6);
+      rangeEndDate = toISO(dObj);
+
+      const [y, m] = rangeStartDate.split('-');
+      rangeCalCurrentYear = parseInt(y);
+      rangeCalCurrentMonth = parseInt(m) - 1;
+
+      selectRangeStatus('present');
+      renderRangeMiniCalendar();
+      updateRangePreview();
+
+      backdrop.classList.add('show');
+    }
+
+    function closeRangeModal(e) {
+      if (e && e.target && e.target.id !== 'rangeModalBackdrop' && !e.target.classList.contains('range-modal-close') && !e.target.classList.contains('range-btn-secondary')) {
+        return;
+      }
+      const backdrop = document.getElementById('rangeModalBackdrop');
+      if (backdrop) backdrop.classList.remove('show');
+    }
+
+    function selectRangeStatus(status) {
+      selectedRangeStatus = status;
+      ['present','absent','holiday'].forEach(s => {
+        const btn = document.getElementById(`rangeOpt-${s}`);
+        if (!btn) return;
+        btn.classList.remove('selected-present','selected-absent','selected-holiday');
+        if (s === status) btn.classList.add(`selected-${status}`);
+      });
+      updateRangePreview();
+    }
+
+    function changeRangeCalMonth(delta) {
+      const today = new Date(todayISO);
+      const minMonthDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      const maxMonthDate = new Date(today.getFullYear(), today.getMonth() + 3, 1);
+
+      const target = new Date(rangeCalCurrentYear, rangeCalCurrentMonth + delta, 1);
+      if (target < minMonthDate || target > maxMonthDate) return;
+
+      rangeCalCurrentYear = target.getFullYear();
+      rangeCalCurrentMonth = target.getMonth();
+      renderRangeMiniCalendar();
+    }
+
+    function renderRangeMiniCalendar() {
+      const titleEl = document.getElementById('rangeCalMonthTitle');
+      const gridEl = document.getElementById('rangeCalDaysGrid');
+      const prevBtn = document.getElementById('rangeCalPrevBtn');
+      const nextBtn = document.getElementById('rangeCalNextBtn');
+      if (!gridEl) return;
+
+      titleEl.textContent = `${MONTHS[rangeCalCurrentMonth]} ${rangeCalCurrentYear}`;
+
+      const today = new Date(todayISO); today.setHours(0,0,0,0);
+      const minMonthDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      const maxMonthDate = new Date(today.getFullYear(), today.getMonth() + 3, 1);
+      const curMonthDate = new Date(rangeCalCurrentYear, rangeCalCurrentMonth, 1);
+
+      prevBtn.disabled = curMonthDate <= minMonthDate;
+      nextBtn.disabled = curMonthDate >= maxMonthDate;
+
+      const firstDayIndex = new Date(rangeCalCurrentYear, rangeCalCurrentMonth, 1).getDay();
+      const daysInMonth = new Date(rangeCalCurrentYear, rangeCalCurrentMonth + 1, 0).getDate();
+      const prefix = `${rangeCalCurrentYear}-${String(rangeCalCurrentMonth+1).padStart(2,'0')}`;
+
+      let html = '';
+      for (let i = 0; i < firstDayIndex; i++) {
+        html += `<div class="range-day-cell empty"></div>`;
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const iso = `${prefix}-${String(d).padStart(2,'0')}`;
+        const dateObj = new Date(rangeCalCurrentYear, rangeCalCurrentMonth, d);
+        dateObj.setHours(0,0,0,0);
+        const dow = dateObj.getDay();
+        const mmdd = iso.slice(5);
+
+        let cls = 'range-day-cell';
+        let isPast = dateObj < today || (iso === todayISO && todayAllPosted);
+        let isSun = dow === 0;
+        let isHol = MANDATORY_HOLIDAYS.has(mmdd);
+
+        if (isPast) cls += ' disabled';
+        else if (isSun) cls += ' sunday';
+        else if (isHol) cls += ' holiday';
+
+        if (rangeStartDate && rangeEndDate && iso >= rangeStartDate && iso <= rangeEndDate && !isPast) {
+          cls += ' in-range';
+        }
+        if (iso === rangeStartDate) cls += ' range-start';
+        if (iso === rangeEndDate) cls += ' range-end';
+
+        const clickAttr = isPast ? '' : `onclick="onRangeDayClick('${iso}')"`;
+        const titleAttr = isHol ? `title="${HOLIDAY_NAMES[mmdd]||'College Holiday'}"` : isSun ? `title="Sunday"` : '';
+
+        html += `<div class="${cls}" data-iso="${iso}" ${clickAttr} ${titleAttr}>${d}</div>`;
+      }
+
+      gridEl.innerHTML = html;
+    }
+
+    function onRangeDayClick(iso) {
+      const earliest = getEarliestPlannableDate();
+
+      if (!rangeStartDate || (rangeStartDate && rangeEndDate)) {
+        // If clicking a date that would leave a gap, automatically start from earliest uncompleted date
+        if (iso > earliest && !planMap[iso]) {
+          rangeStartDate = earliest;
+          rangeEndDate = iso;
+        } else {
+          rangeStartDate = iso;
+          rangeEndDate = null;
+        }
+      } else if (rangeStartDate && !rangeEndDate) {
+        if (iso < rangeStartDate) {
+          rangeStartDate = iso;
+          rangeEndDate = null;
+        } else {
+          rangeEndDate = iso;
+        }
+      }
+
+      renderRangeMiniCalendar();
+      updateRangePreview();
+    }
+
+    function applyRangePreset(days) {
+      if (!rangeStartDate) rangeStartDate = getEarliestPlannableDate();
+
+      const fromObj = new Date(rangeStartDate);
+      if (days === 'month') {
+        const endOfMonth = new Date(fromObj.getFullYear(), fromObj.getMonth() + 1, 0);
+        rangeEndDate = toISO(endOfMonth);
+      } else {
+        const target = new Date(fromObj);
+        target.setDate(target.getDate() + (days - 1));
+        rangeEndDate = toISO(target);
+      }
+
+      const [y, m] = rangeEndDate.split('-');
+      rangeCalCurrentYear = parseInt(y);
+      rangeCalCurrentMonth = parseInt(m) - 1;
+
+      renderRangeMiniCalendar();
+      updateRangePreview();
+    }
+
+    function calculateRangePlanDays() {
+      if (!rangeStartDate) return null;
+      const effectiveEnd = rangeEndDate || rangeStartDate;
+
+      const start = new Date(rangeStartDate); start.setHours(0,0,0,0);
+      const end = new Date(effectiveEnd); end.setHours(0,0,0,0);
+      const today = new Date(todayISO); today.setHours(0,0,0,0);
+
+      if (end < start) return { error: 'To Date cannot be earlier than From Date' };
+
+      const workingDates = [];
+      let sundaysCount = 0;
+      let holidaysCount = 0;
+      let pastSkippedCount = 0;
+
+      let cur = new Date(start);
+      while (cur <= end) {
+        const iso = toISO(cur);
+        const mmdd = iso.slice(5);
+
+        if (cur < today || (iso === todayISO && todayAllPosted)) {
+          pastSkippedCount++;
+        } else if (cur.getDay() === 0) {
+          sundaysCount++;
+        } else if (MANDATORY_HOLIDAYS.has(mmdd)) {
+          holidaysCount++;
+        } else {
+          workingDates.push(iso);
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+
+      return {
+        fromVal: rangeStartDate,
+        toVal: effectiveEnd,
+        start,
+        end,
+        workingDates,
+        sundaysCount,
+        holidaysCount,
+        pastSkippedCount
+      };
+    }
+
+    /**
+     * Checks if any working day from today up to (but not including) rangeStartDate
+     * is incomplete (unplanned or partial with uncommitted periods).
+     * Returns { incomplete: true, iso, reason } or { incomplete: false }.
+     */
+    function findIncompletePriorDay() {
+      if (!rangeStartDate) return { incomplete: false };
+
+      const today = new Date(todayISO); today.setHours(0,0,0,0);
+      const rangeStart = new Date(rangeStartDate); rangeStart.setHours(0,0,0,0);
+
+      // If today is already fully posted, skip today — start checking from tomorrow
+      let checkDate = new Date(today);
+      if (todayAllPosted) checkDate.setDate(checkDate.getDate() + 1);
+
+      while (checkDate < rangeStart) {
+        const iso = toISO(checkDate);
+        const mmdd = iso.slice(5);
+        const dow = checkDate.getDay();
+
+        // Skip Sundays and holidays — they don't need planning
+        if (dow === 0 || MANDATORY_HOLIDAYS.has(mmdd)) {
+          checkDate.setDate(checkDate.getDate() + 1);
+          continue;
+        }
+
+        // Check if this day is planned at all
+        if (!planMap[iso]) {
+          const dayLabel = `${parseInt(iso.split('-')[2])} ${MONTHS[parseInt(iso.split('-')[1])-1]}`;
+          return {
+            incomplete: true,
+            iso: iso,
+            reason: `${dayLabel} is not planned yet. Complete all previous days before planning a range.`
+          };
+        }
+
+        // If planned as partial, check all 6 periods are committed
+        if (planMap[iso] === 'partial') {
+          const states = periodPlan[iso] || {};
+          const portalPeriods = portalPeriodMap[iso] || {};
+          const uncommitted = PERIODS.filter(p => {
+            const isPosted = portalPeriods[p] === 'P' || portalPeriods[p] === 'A';
+            return !isPosted && states[p] !== 'present' && states[p] !== 'absent';
+          });
+
+          if (uncommitted.length > 0) {
+            const dayLabel = `${parseInt(iso.split('-')[2])} ${MONTHS[parseInt(iso.split('-')[1])-1]}`;
+            return {
+              incomplete: true,
+              iso: iso,
+              reason: `${dayLabel} has uncommitted periods (${uncommitted.join(', ')}). Complete the day before planning a range.`
+            };
+          }
+        }
+
+        checkDate.setDate(checkDate.getDate() + 1);
+      }
+
+      // Also check today itself if rangeStartDate IS today (and it's partial with gaps)
+      if (rangeStartDate === todayISO && !todayAllPosted && planMap[todayISO] === 'partial') {
+        const states = periodPlan[todayISO] || {};
+        const portalPeriods = portalPeriodMap[todayISO] || {};
+        const uncommitted = PERIODS.filter(p => {
+          const isPosted = portalPeriods[p] === 'P' || portalPeriods[p] === 'A';
+          return !isPosted && states[p] !== 'present' && states[p] !== 'absent';
+        });
+
+        if (uncommitted.length > 0) {
+          return {
+            incomplete: true,
+            iso: todayISO,
+            reason: `Today has uncommitted periods (${uncommitted.join(', ')}). Complete all periods before planning a range.`
+          };
+        }
+      }
+
+      return { incomplete: false };
+    }
+
+    function updateRangePreview() {
+      const displayStart = document.getElementById('rangeDisplayStart');
+      const displayEnd = document.getElementById('rangeDisplayEnd');
+      const previewBox = document.getElementById('rangePreviewBox');
+      const applyBtn = document.getElementById('rangeApplyBtn');
+      if (!previewBox || !applyBtn) return;
+
+      displayStart.textContent = rangeStartDate ? formatDateShort(rangeStartDate) : '—';
+      displayEnd.textContent = rangeEndDate ? formatDateShort(rangeEndDate) : (rangeStartDate ? 'Click end date' : '—');
+
+      const res = calculateRangePlanDays();
+      if (!res) {
+        previewBox.innerHTML = `<span class="range-summary-error">Click a date on the calendar to start.</span>`;
+        applyBtn.disabled = true;
+        return;
+      }
+
+      if (res.error) {
+        previewBox.innerHTML = `<span class="range-summary-error">${res.error}</span>`;
+        applyBtn.disabled = true;
+        return;
+      }
+
+      if (res.workingDates.length === 0) {
+        let reason = 'All dates in range are Sundays or holidays.';
+        if (res.pastSkippedCount > 0 && res.sundaysCount === 0 && res.holidaysCount === 0) {
+          reason = 'Cannot plan past dates.';
+        }
+        previewBox.innerHTML = `<span class="range-summary-error">${reason} Select a working day.</span>`;
+        applyBtn.disabled = true;
+        return;
+      }
+
+      // ── STRICT VALIDATION: block if any prior day is incomplete ──
+      const incompleteCheck = findIncompletePriorDay();
+      if (incompleteCheck.incomplete) {
+        previewBox.innerHTML = `<span class="range-summary-error">⚠️ ${incompleteCheck.reason}</span>`;
+        applyBtn.disabled = true;
+        return;
+      }
+
+      const fromW = WEEKDAY_NAMES[res.start.getDay()].slice(0, 3);
+      const toW = WEEKDAY_NAMES[res.end.getDay()].slice(0, 3);
+      const statusTitle = selectedRangeStatus === 'present' ? 'Present' : selectedRangeStatus === 'absent' ? 'Absent' : 'Holiday';
+      const statusColor = selectedRangeStatus === 'present' ? 'var(--present)' : selectedRangeStatus === 'absent' ? 'var(--absent)' : 'var(--holiday)';
+      const impactText = selectedRangeStatus === 'present' 
+        ? `+${res.workingDates.length * 6} attended / +${res.workingDates.length * 6} total classes` 
+        : selectedRangeStatus === 'absent' 
+        ? `+0 attended / +${res.workingDates.length * 6} total classes` 
+        : `0 classes counted`;
+
+      let skips = [];
+      if (res.sundaysCount > 0) skips.push(`${res.sundaysCount} Sun`);
+      if (res.holidaysCount > 0) skips.push(`${res.holidaysCount} Hol`);
+      const skipsText = skips.length > 0 ? `(${skips.join(', ')} skipped)` : '';
+
+      previewBox.innerHTML = `
+        <div class="range-summary-row">
+          <span>Selected:</span>
+          <strong>${fromW}, ${formatDateShort(res.fromVal)} – ${toW}, ${formatDateShort(res.toVal)}</strong>
+        </div>
+        <div class="range-summary-row" style="margin-top:2px;">
+          <span>College Working Days:</span>
+          <strong>${res.workingDates.length} days ${skipsText}</strong>
+        </div>
+        <div class="range-summary-status" style="color: ${statusColor}">
+          ${statusTitle} • ${impactText}
+        </div>
+      `;
+
+      applyBtn.disabled = false;
+    }
+
+    function applyRangePlan() {
+      const res = calculateRangePlanDays();
+      if (!res || res.error || res.workingDates.length === 0) return;
+
+      // Safety net: block if prior days are incomplete
+      const incompleteCheck = findIncompletePriorDay();
+      if (incompleteCheck.incomplete) {
+        showToast('⚠️ Complete previous days first!');
+        return;
+      }
+
+      res.workingDates.forEach(iso => {
+        planMap[iso] = selectedRangeStatus;
+        delete periodPlan[iso];
+      });
+
+      hasInteracted = true;
+      closeRangeModal();
+      closePanel();
+      renderCalendar();
+      updateProjection();
+
+      const statusName = selectedRangeStatus === 'present' ? 'Full Present' : selectedRangeStatus === 'absent' ? 'Full Absent' : 'Holiday';
+      showToast(`⚡ Planned ${res.workingDates.length} days as ${statusName}!`);
+    }
+
   </script>
 </body>
 </html>
