@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NRCM Attendance Planner</title>
-  <link rel="icon" type="image/png" href="./time_icon_gradient.png">
+  <!--<link rel="icon" type="image/png" href="./time_icon_gradient.png"> -->
+  <link rel="icon" type="image/png" href="./attendance.png">
+
+
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     :root[data-theme="dark"] {
@@ -45,12 +48,41 @@
       align-items: center;
       justify-content: center;
       transition: background 0.3s, color 0.3s;
-      /* CHANGE 1: original had no side padding on body, so on narrow phones
-         the card (width:100%) touched both screen edges with zero breathing
-         room. Adding 16px keeps a visible gutter at any viewport width.
-         ORIGINAL: (no padding property existed here) */
       padding: 16px;
+      position: relative;
+      overflow: hidden;
     }
+
+    /* Ambient orbs — give the glass card something to blur against */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 500px;
+      height: 500px;
+      top: -120px;
+      left: -120px;
+      background: radial-gradient(circle, rgba(108, 99, 255, 0.12) 0%, transparent 65%);
+    }
+    body::after {
+      width: 400px;
+      height: 400px;
+      bottom: -100px;
+      right: -100px;
+      background: radial-gradient(circle, rgba(108, 99, 255, 0.08) 0%, transparent 65%);
+    }
+    [data-theme="light"] body::before {
+      background: radial-gradient(circle, rgba(108, 99, 255, 0.08) 0%, transparent 65%);
+    }
+    [data-theme="light"] body::after {
+      background: radial-gradient(circle, rgba(108, 99, 255, 0.05) 0%, transparent 65%);
+    }
+    .card { position: relative; z-index: 1; }
+
 
     /* CHANGE 2 (new block): respect users who've asked for reduced motion.
        None of this existed in the original — the rotate/glow/float/pulse
@@ -139,36 +171,47 @@
       opacity: 0.5;
     }
 
-    /* Enhanced Card with Glassmorphism */
     .card {
-      background: var(--card);
-      border: 1px solid rgba(var(--border-rgb), 0.1);
+      background: rgba(22, 22, 31, 0.55);
+      border: 1px solid rgba(var(--border-rgb), 0.15);
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 32px;
       padding: 48px 40px;
       width: 100%;
       max-width: 440px;
       animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(10px);
-      box-shadow: 
-        0 25px 50px -12px rgba(0, 0, 0, 0.25),
-        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      box-shadow:
+        0 32px 64px -16px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
       position: relative;
       overflow: hidden;
     }
+    [data-theme="light"] .card {
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(var(--border-rgb), 0.3);
+      border-top: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow:
+        0 32px 64px -16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
 
     .card::before {
       content: '';
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
+      top: -60px;
+      right: -60px;
+      width: 220px;
+      height: 220px;
       background: radial-gradient(
         circle at center,
-        rgba(108, 99, 255, 0.03) 0%,
-        transparent 50%
+        rgba(108, 99, 255, 0.07) 0%,
+        transparent 65%
       );
-      animation: rotate 20s linear infinite;
+      border-radius: 50%;
+      pointer-events: none;
       z-index: 0;
     }
 
@@ -196,16 +239,14 @@
     }
 
     .logo span {
-      color: var(--accent);
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       position: relative;
       display: inline-block;
-      animation: glow 2s ease-in-out infinite;
     }
 
-    @keyframes glow {
-      0%, 100% { text-shadow: 0 0 20px rgba(108, 99, 255, 0); }
-      50% { text-shadow: 0 0 30px rgba(108, 99, 255, 0.3); }
-    }
 
     .tagline {
       color: var(--subtext);
@@ -259,27 +300,18 @@
     }
 
     .tab::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(108, 99, 255, 0.1);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
+      display: none;
     }
 
-    .tab:hover::before {
-      width: 200px;
-      height: 200px;
+    .tab:hover:not(.active) {
+      color: var(--text);
+      background: rgba(108, 99, 255, 0.06);
     }
 
     .tab.active {
       background: var(--accent);
       color: white;
-      box-shadow: 0 8px 20px -8px var(--accent);
+      box-shadow: 0 2px 12px rgba(108, 99, 255, 0.35);
     }
 
     .tab.active:hover {
@@ -358,11 +390,11 @@ input:-webkit-autofill:active {
 
     input:focus {
       border-color: var(--accent);
-      box-shadow: 0 8px 24px -8px var(--accent);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
       background: var(--card);
     }
 
-    /* Premium Button with Ripple */
+    /* Button — clean lift with no expanding ripple */
     .btn {
       width: 100%;
       padding: 16px 24px;
@@ -374,39 +406,23 @@ input:-webkit-autofill:active {
       font-weight: 600;
       font-family: 'Syne', sans-serif;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s ease;
       margin-top: 16px;
       position: relative;
       overflow: hidden;
       letter-spacing: 0.5px;
-      box-shadow: 0 10px 20px -10px var(--accent);
-    }
-
-    .btn::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    .btn:hover::after {
-      width: 300px;
-      height: 300px;
+      box-shadow: 0 4px 14px rgba(108, 99, 255, 0.3);
     }
 
     .btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 20px 30px -12px var(--accent);
+      box-shadow: 0 8px 20px rgba(108, 99, 255, 0.4);
+      filter: brightness(1.08);
     }
 
     .btn:active {
       transform: translateY(0);
+      filter: brightness(0.96);
     }
 
     .btn:disabled {
@@ -414,6 +430,7 @@ input:-webkit-autofill:active {
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
+      filter: none;
     }
 
     .btn.loading {
@@ -611,7 +628,34 @@ input:-webkit-autofill:active {
         transform: translateX(24px); /* ORIGINAL: translateX(32px) — matches smaller track */
       }
     }
+
+    /* ── Animated character ── */
+    .svgContainer {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      border: 2.5px solid #3A5E77;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .svgInner {
+      position: relative;
+      width: 100%;
+      height: 0;
+      overflow: hidden;
+      padding-bottom: 100%;
+    }
+    .mySVG {
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
 </head>
 <body>
 
@@ -624,6 +668,97 @@ input:-webkit-autofill:active {
   </div>
 
   <div class="card">
+    <!-- Animated character -->
+    <div class="svgContainer">
+      <div class="svgInner">
+        <svg class="mySVG" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 200">
+          <defs>
+            <circle id="armMaskPath" cx="100" cy="100" r="100"/>
+          </defs>
+          <clipPath id="armMask">
+            <use xlink:href="#armMaskPath" overflow="visible"/>
+          </clipPath>
+          <circle cx="100" cy="100" r="100" fill="#a9ddf3"/>
+          <g class="body">
+            <path fill="#FFFFFF" d="M193.3,135.9c-5.8-8.4-15.5-13.9-26.5-13.9H151V72c0-27.6-22.4-50-50-50S51,44.4,51,72v50H32.1 c-10.6,0-20,5.1-25.8,13l0,78h187L193.3,135.9z"/>
+            <path fill="none" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" d="M193.3,135.9 c-5.8-8.4-15.5-13.9-26.5-13.9H151V72c0-27.6-22.4-50-50-50S51,44.4,51,72v50H32.1c-10.6,0-20,5.1-25.8,13"/>
+            <path fill="#DDF1FA" d="M100,156.4c-22.9,0-43,11.1-54.1,27.7c15.6,10,34.2,15.9,54.1,15.9s38.5-5.8,54.1-15.9 C143,167.5,122.9,156.4,100,156.4z"/>
+          </g>
+          <g class="earL">
+            <g class="outerEar" fill="#ddf1fa" stroke="#3a5e77" stroke-width="2.5">
+              <circle cx="47" cy="83" r="11.5"/>
+              <path d="M46.3 78.9c-2.3 0-4.1 1.9-4.1 4.1 0 2.3 1.9 4.1 4.1 4.1" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="earHair">
+              <rect x="51" y="64" fill="#FFFFFF" width="15" height="35"/>
+              <path d="M53.4 62.8C48.5 67.4 45 72.2 42.8 77c3.4-.1 6.8-.1 10.1.1-4 3.7-6.8 7.6-8.2 11.6 2.1 0 4.2 0 6.3.2-2.6 4.1-3.8 8.3-3.7 12.5 1.2-.7 3.4-1.4 5.2-1.9" fill="#fff" stroke="#3a5e77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+          </g>
+          <g class="earR">
+            <g class="outerEar" fill="#ddf1fa" stroke="#3a5e77" stroke-width="2.5">
+              <circle cx="155" cy="83" r="11.5"/>
+              <path d="M155.7 78.9c2.3 0 4.1 1.9 4.1 4.1 0 2.3-1.9 4.1-4.1 4.1" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="earHair">
+              <rect x="131" y="64" fill="#FFFFFF" width="20" height="35"/>
+              <path d="M148.6 62.8c4.9 4.6 8.4 9.4 10.6 14.2-3.4-.1-6.8-.1-10.1.1 4 3.7 6.8 7.6 8.2 11.6-2.1 0-4.2 0-6.3.2 2.6 4.1 3.8 8.3 3.7 12.5-1.2-.7-3.4-1.4-5.2-1.9" fill="#fff" stroke="#3a5e77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+          </g>
+          <path class="chin" d="M84.1 121.6c2.7 2.9 6.1 5.4 9.8 7.5l.9-4.5c2.9 2.5 6.3 4.8 10.2 6.5 0-1.9-.1-3.9-.2-5.8 3 1.2 6.2 2 9.7 2.5-.3-2.1-.7-4.1-1.2-6.1" fill="none" stroke="#3a5e77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="face" fill="#DDF1FA" d="M134.5,46v35.5c0,21.815-15.446,39.5-34.5,39.5s-34.5-17.685-34.5-39.5V46"/>
+          <path class="hair" fill="#FFFFFF" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M81.457,27.929 c1.755-4.084,5.51-8.262,11.253-11.77c0.979,2.565,1.883,5.14,2.712,7.723c3.162-4.265,8.626-8.27,16.272-11.235 c-0.737,3.293-1.588,6.573-2.554,9.837c4.857-2.116,11.049-3.64,18.428-4.156c-2.403,3.23-5.021,6.391-7.852,9.474"/>
+          <g class="eyebrow">
+            <path fill="#FFFFFF" d="M138.142,55.064c-4.93,1.259-9.874,2.118-14.787,2.599c-0.336,3.341-0.776,6.689-1.322,10.037 c-4.569-1.465-8.909-3.222-12.996-5.226c-0.98,3.075-2.07,6.137-3.267,9.179c-5.514-3.067-10.559-6.545-15.097-10.329 c-1.806,2.889-3.745,5.73-5.816,8.515c-7.916-4.124-15.053-9.114-21.296-14.738l1.107-11.768h73.475V55.064z"/>
+            <path fill="#FFFFFF" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M63.56,55.102 c6.243,5.624,13.38,10.614,21.296,14.738c2.071-2.785,4.01-5.626,5.816-8.515c4.537,3.785,9.583,7.263,15.097,10.329 c1.197-3.043,2.287-6.104,3.267-9.179c4.087,2.004,8.427,3.761,12.996,5.226c0.545-3.348,0.986-6.696,1.322-10.037 c4.913-0.481,9.857-1.34,14.787-2.599"/>
+          </g>
+          <g class="eyeL">
+            <circle cx="85.5" cy="78.5" r="3.5" fill="#3a5e77"/>
+            <circle cx="84" cy="76" r="1" fill="#fff"/>
+          </g>
+          <g class="eyeR">
+            <circle cx="114.5" cy="78.5" r="3.5" fill="#3a5e77"/>
+            <circle cx="113" cy="76" r="1" fill="#fff"/>
+          </g>
+          <g class="mouth">
+            <path class="mouthBG" fill="#617E92" d="M100.2,101c-0.4,0-1.4,0-1.8,0c-2.7-0.3-5.3-1.1-8-2.5c-0.7-0.3-0.9-1.2-0.6-1.8 c0.2-0.5,0.7-0.7,1.2-0.7c0.2,0,0.5,0.1,0.6,0.2c3,1.5,5.8,2.3,8.6,2.3s5.7-0.7,8.6-2.3c0.2-0.1,0.4-0.2,0.6-0.2 c0.5,0,1,0.3,1.2,0.7c0.4,0.7,0.1,1.5-0.6,1.9c-2.6,1.4-5.3,2.2-7.9,2.5C101.7,101,100.5,101,100.2,101z"/>
+            <path style="display:none;" class="mouthSmallBG" fill="#617E92" d="M100.2,101c-0.4,0-1.4,0-1.8,0c-2.7-0.3-5.3-1.1-8-2.5c-0.7-0.3-0.9-1.2-0.6-1.8 c0.2-0.5,0.7-0.7,1.2-0.7c0.2,0,0.5,0.1,0.6,0.2c3,1.5,5.8,2.3,8.6,2.3s5.7-0.7,8.6-2.3c0.2-0.1,0.4-0.2,0.6-0.2 c0.5,0,1,0.3,1.2,0.7c0.4,0.7,0.1,1.5-0.6,1.9c-2.6,1.4-5.3,2.2-7.9,2.5C101.7,101,100.5,101,100.2,101z"/>
+            <path style="display:none;" class="mouthMediumBG" d="M95,104.2c-4.5,0-8.2-3.7-8.2-8.2v-2c0-1.2,1-2.2,2.2-2.2h22c1.2,0,2.2,1,2.2,2.2v2 c0,4.5-3.7,8.2-8.2,8.2H95z"/>
+            <path style="display:none;" class="mouthLargeBG" d="M100 110.2c-9 0-16.2-7.3-16.2-16.2 0-2.3 1.9-4.2 4.2-4.2h24c2.3 0 4.2 1.9 4.2 4.2 0 9-7.2 16.2-16.2 16.2z" fill="#617e92" stroke="#3a5e77" stroke-linejoin="round" stroke-width="2.5"/>
+            <defs>
+              <path id="mouthMaskPath" d="M100.2,101c-0.4,0-1.4,0-1.8,0c-2.7-0.3-5.3-1.1-8-2.5c-0.7-0.3-0.9-1.2-0.6-1.8 c0.2-0.5,0.7-0.7,1.2-0.7c0.2,0,0.5,0.1,0.6,0.2c3,1.5,5.8,2.3,8.6,2.3s5.7-0.7,8.6-2.3c0.2-0.1,0.4-0.2,0.6-0.2 c0.5,0,1,0.3,1.2,0.7c0.4,0.7,0.1,1.5-0.6,1.9c-2.6,1.4-5.3,2.2-7.9,2.5C101.7,101,100.5,101,100.2,101z"/>
+            </defs>
+            <clipPath id="mouthMask">
+              <use xlink:href="#mouthMaskPath" overflow="visible"/>
+            </clipPath>
+            <g clip-path="url(#mouthMask)">
+              <g class="tongue">
+                <circle cx="100" cy="107" r="8" fill="#cc4a6c"/>
+                <ellipse class="tongueHighlight" cx="100" cy="100.5" rx="3" ry="1.5" opacity=".1" fill="#fff"/>
+              </g>
+            </g>
+            <path clip-path="url(#mouthMask)" class="tooth" style="fill:#FFFFFF;" d="M106,97h-4c-1.1,0-2-0.9-2-2v-2h8v2C108,96.1,107.1,97,106,97z"/>
+            <path class="mouthOutline" fill="none" stroke="#3A5E77" stroke-width="2.5" stroke-linejoin="round" d="M100.2,101c-0.4,0-1.4,0-1.8,0c-2.7-0.3-5.3-1.1-8-2.5c-0.7-0.3-0.9-1.2-0.6-1.8 c0.2-0.5,0.7-0.7,1.2-0.7c0.2,0,0.5,0.1,0.6,0.2c3,1.5,5.8,2.3,8.6,2.3s5.7-0.7,8.6-2.3c0.2-0.1,0.4-0.2,0.6-0.2 c0.5,0,1,0.3,1.2,0.7c0.4,0.7,0.1,1.5-0.6,1.9c-2.6,1.4-5.3,2.2-7.9,2.5C101.7,101,100.5,101,100.2,101z"/>
+          </g>
+          <path class="nose" d="M97.7 79.9h4.7c1.9 0 3 2.2 1.9 3.7l-2.3 3.3c-.9 1.3-2.9 1.3-3.8 0l-2.3-3.3c-1.3-1.6-.2-3.7 1.8-3.7z" fill="#3a5e77"/>
+          <g class="arms" clip-path="url(#armMask)">
+            <g class="armL">
+              <path fill="#ddf1fa" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2.5" d="M121.3 97.4L111 58.7l38.8-10.4 20 36.1z"/>
+              <path fill="#ddf1fa" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2.5" d="M134.4 52.5l19.3-5.2c2.7-.7 5.4.9 6.1 3.5.7 2.7-.9 5.4-3.5 6.1L146 59.7M160.8 76.5l19.4-5.2c2.7-.7 5.4.9 6.1 3.5.7 2.7-.9 5.4-3.5 6.1l-18.3 4.9M158.3 66.8l23.1-6.2c2.7-.7 5.4.9 6.1 3.5.7 2.7-.9 5.4-3.5 6.1l-23.1 6.2M150.9 58.4l26-7c2.7-.7 5.4.9 6.1 3.5.7 2.7-.9 5.4-3.5 6.1l-21.3 5.7"/>
+              <path fill="#a9ddf3" d="M178.8 74.7l2.2-.6c1.1-.3 2.2.3 2.4 1.4.3 1.1-.3 2.2-1.4 2.4l-2.2.6-1-3.8zM180.1 64l2.2-.6c1.1-.3 2.2.3 2.4 1.4.3 1.1-.3 2.2-1.4 2.4l-2.2.6-1-3.8zM175.5 54.9l2.2-.6c1.1-.3 2.2.3 2.4 1.4.3 1.1-.3 2.2-1.4 2.4l-2.2.6-1-3.8zM152.1 49.4l2.2-.6c1.1-.3 2.2.3 2.4 1.4.3 1.1-.3 2.2-1.4 2.4l-2.2.6-1-3.8z"/>
+              <path fill="#fff" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M123.5 96.8c-41.4 14.9-84.1 30.7-108.2 35.5L1.2 80c33.5-9.9 71.9-16.5 111.9-21.8"/>
+              <path fill="#fff" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M108.5 59.4c7.7-5.3 14.3-8.4 22.8-13.2-2.4 5.3-4.7 10.3-6.7 15.1 4.3.3 8.4.7 12.3 1.3-4.2 5-8.1 9.6-11.5 13.9 3.1 1.1 6 2.4 8.7 3.8-1.4 2.9-2.7 5.8-3.9 8.5 2.5 3.5 4.6 7.2 6.3 11-4.9-.8-9-.7-16.2-2.7M94.5 102.8c-.6 4-3.8 8.9-9.4 14.7-2.6-1.8-5-3.7-7.2-5.7-2.5 4.1-6.6 8.8-12.2 14-1.9-2.2-3.4-4.5-4.5-6.9-4.4 3.3-9.5 6.9-15.4 10.8-.2-3.4.1-7.1 1.1-10.9M97.5 62.9c-1.7-2.4-5.9-4.1-12.4-5.2-.9 2.2-1.8 4.3-2.5 6.5-3.8-1.8-9.4-3.1-17-3.8.5 2.3 1.2 4.5 1.9 6.8-5-.6-11.2-.9-18.4-1 2 2.9.9 3.5 3.9 6.2"/>
+            </g>
+            <g class="armR">
+              <path fill="#ddf1fa" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2.5" d="M265.4 97.3l10.4-38.6-38.9-10.5-20 36.1z"/>
+              <path fill="#ddf1fa" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2.5" d="M252.4 52.4L233 47.2c-2.7-.7-5.4.9-6.1 3.5-.7 2.7.9 5.4 3.5 6.1l10.3 2.8M226 76.4l-19.4-5.2c-2.7-.7-5.4.9-6.1 3.5-.7 2.7.9 5.4 3.5 6.1l18.3 4.9M228.4 66.7l-23.1-6.2c-2.7-.7-5.4.9-6.1 3.5-.7 2.7.9 5.4 3.5 6.1l23.1 6.2M235.8 58.3l-26-7c-2.7-.7-5.4.9-6.1 3.5-.7 2.7.9 5.4 3.5 6.1l21.3 5.7"/>
+              <path fill="#a9ddf3" d="M207.9 74.7l-2.2-.6c-1.1-.3-2.2.3-2.4 1.4-.3 1.1.3 2.2 1.4 2.4l2.2.6 1-3.8zM206.7 64l-2.2-.6c-1.1-.3-2.2.3-2.4 1.4-.3 1.1.3 2.2 1.4 2.4l2.2.6 1-3.8zM211.2 54.8l-2.2-.6c-1.1-.3-2.2.3-2.4 1.4-.3 1.1.3 2.2 1.4 2.4l2.2.6 1-3.8zM234.6 49.4l-2.2-.6c-1.1-.3-2.2.3-2.4 1.4-.3 1.1.3 2.2 1.4 2.4l2.2.6 1-3.8z"/>
+              <path fill="#fff" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M263.3 96.7c41.4 14.9 84.1 30.7 108.2 35.5l14-52.3C352 70 313.6 63.5 273.6 58.1"/>
+              <path fill="#fff" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M278.2 59.3l-18.6-10 2.5 11.9-10.7 6.5 9.9 8.7-13.9 6.4 9.1 5.9-13.2 9.2 23.1-.9M284.5 100.1c-.4 4 1.8 8.9 6.7 14.8 3.5-1.8 6.7-3.6 9.7-5.5 1.8 4.2 5.1 8.9 10.1 14.1 2.7-2.1 5.1-4.4 7.1-6.8 4.1 3.4 9 7 14.7 11 1.2-3.4 1.8-7 1.7-10.9M314 66.7s5.4-5.7 12.6-7.4c1.7 2.9 3.3 5.7 4.9 8.6 3.8-2.5 9.8-4.4 18.2-5.7.1 3.1.1 6.1 0 9.2 5.5-1 12.5-1.6 20.8-1.9-1.4 3.9-2.5 8.4-2.5 8.4"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
     <div class="logo">NRCM <span>Attend</span></div>
     <div class="tagline">Know where you stand, plan your semester.</div>
     
@@ -833,6 +968,180 @@ window.onload = function() {
             }
         }
     });
+
+    // ── Face animation ───────────────────────────────────────────────────────
+    (function() {
+      var svgEl      = document.querySelector('.svgContainer'),
+          armL       = document.querySelector('.armL'),
+          armR       = document.querySelector('.armR'),
+          eyeL       = document.querySelector('.eyeL'),
+          eyeR       = document.querySelector('.eyeR'),
+          nose       = document.querySelector('.nose'),
+          mouth      = document.querySelector('.mouth'),
+          mouthBG    = document.querySelector('.mouthBG'),
+          mouthSmBG  = document.querySelector('.mouthSmallBG'),
+          mouthMdBG  = document.querySelector('.mouthMediumBG'),
+          mouthLgBG  = document.querySelector('.mouthLargeBG'),
+          mouthMaskP = document.querySelector('#mouthMaskPath'),
+          mouthOL    = document.querySelector('.mouthOutline'),
+          tooth      = document.querySelector('.tooth'),
+          tongue     = document.querySelector('.tongue'),
+          chin       = document.querySelector('.chin'),
+          face       = document.querySelector('.face'),
+          eyebrow    = document.querySelector('.eyebrow'),
+          outerEarL  = document.querySelector('.earL .outerEar'),
+          outerEarR  = document.querySelector('.earR .outerEar'),
+          earHairL   = document.querySelector('.earL .earHair'),
+          earHairR   = document.querySelector('.earR .earHair'),
+          hair       = document.querySelector('.hair');
+
+      var eyeMaxH = 20, eyeMaxV = 10, noseMaxH = 23, noseMaxV = 10;
+      var mouthStatus = "small";
+
+      // Arm initial positions (hidden below circle)
+      TweenMax.set(armL, {x: -93, y: 220, rotation: 105, transformOrigin: "top left"});
+      TweenMax.set(armR, {x: -93, y: 220, rotation: -105, transformOrigin: "top right"});
+
+      function getPos(el) {
+        var x = 0, y = 0;
+        while (el) {
+          if (el.tagName === "BODY") {
+            x += el.offsetLeft - (el.scrollLeft || document.documentElement.scrollLeft) + el.clientLeft;
+            y += el.offsetTop  - (el.scrollTop  || document.documentElement.scrollTop)  + el.clientTop;
+          } else {
+            x += el.offsetLeft - el.scrollLeft + el.clientLeft;
+            y += el.offsetTop  - el.scrollTop  + el.clientTop;
+          }
+          el = el.offsetParent;
+        }
+        return {x: x, y: y};
+      }
+
+      function getAngle(x1,y1,x2,y2){ return Math.atan2(y1-y2, x1-x2); }
+
+      function trackEyes(inputEl) {
+        // build a mirror div to find caret pixel position
+        var carPos = inputEl.selectionEnd || inputEl.value.length,
+            div    = document.createElement('div'),
+            span   = document.createElement('span'),
+            cs     = getComputedStyle(inputEl);
+        [].forEach.call(cs, function(p){ div.style[p] = cs[p]; });
+        div.style.position = 'absolute';
+        div.style.visibility = 'hidden';
+        document.body.appendChild(div);
+        div.textContent = inputEl.value.substr(0, carPos);
+        span.textContent = inputEl.value.substr(carPos) || '.';
+        div.appendChild(span);
+
+        var svgPos    = getPos(svgEl),
+            inputPos  = getPos(inputEl),
+            caretPos  = getPos(span),
+            svgCx     = svgPos.x + svgEl.offsetWidth / 2,
+            caretX    = inputPos.x + caretPos.x,
+            caretY    = inputPos.y + 25;
+
+        document.body.removeChild(div);
+
+        var eyeLPos   = {x: svgPos.x + 84*svgEl.offsetWidth/200,  y: svgPos.y + 76*svgEl.offsetHeight/200};
+        var eyeRPos   = {x: svgPos.x + 113*svgEl.offsetWidth/200, y: svgPos.y + 76*svgEl.offsetHeight/200};
+        var nosePos   = {x: svgPos.x + 97*svgEl.offsetWidth/200,  y: svgPos.y + 81*svgEl.offsetHeight/200};
+        var mouthPos  = {x: svgPos.x + 100*svgEl.offsetWidth/200, y: svgPos.y + 100*svgEl.offsetHeight/200};
+
+        var aL = getAngle(eyeLPos.x,  eyeLPos.y,  caretX, caretY);
+        var aR = getAngle(eyeRPos.x,  eyeRPos.y,  caretX, caretY);
+        var aN = getAngle(nosePos.x,  nosePos.y,  caretX, caretY);
+        var aM = getAngle(mouthPos.x, mouthPos.y, caretX, caretY);
+
+        var eLX = Math.cos(aL)*eyeMaxH, eLY = Math.sin(aL)*eyeMaxV;
+        var eRX = Math.cos(aR)*eyeMaxH, eRY = Math.sin(aR)*eyeMaxV;
+        var nX  = Math.cos(aN)*noseMaxH, nY = Math.sin(aN)*noseMaxV;
+        var mX  = Math.cos(aM)*noseMaxH, mY = Math.sin(aM)*noseMaxV;
+        var mR  = Math.cos(aM)*6;
+        var dFromC = svgCx - caretX;
+        var chinS = Math.max(0.85, 1 - Math.abs(dFromC)*0.0015);
+        var fX = mX*.3, fY = mY*.4;
+
+        TweenMax.to(eyeL,    1, {x:-eLX, y:-eLY, ease:Expo.easeOut});
+        TweenMax.to(eyeR,    1, {x:-eRX, y:-eRY, ease:Expo.easeOut});
+        TweenMax.to(nose,    1, {x:-nX,  y:-nY,  rotation:mR, transformOrigin:"center center", ease:Expo.easeOut});
+        TweenMax.to(mouth,   1, {x:-mX,  y:-mY,  rotation:mR, transformOrigin:"center center", ease:Expo.easeOut});
+        TweenMax.to(chin,    1, {x:-mX*.8, y:-mY*.5, scaleY:chinS, ease:Expo.easeOut});
+        TweenMax.to(face,    1, {x:-fX, y:-fY, skewX:-Math.cos(aM)*5, transformOrigin:"center top", ease:Expo.easeOut});
+        TweenMax.to(eyebrow, 1, {x:-fX, y:-fY, skewX:-Math.cos(aM)*25, transformOrigin:"center top", ease:Expo.easeOut});
+        TweenMax.to(outerEarL, 1, {x:Math.cos(aM)*4,  y:-Math.cos(aM)*5, ease:Expo.easeOut});
+        TweenMax.to(outerEarR, 1, {x:Math.cos(aM)*4,  y: Math.cos(aM)*5, ease:Expo.easeOut});
+        TweenMax.to(earHairL,  1, {x:-Math.cos(aM)*4, y:-Math.cos(aM)*5, ease:Expo.easeOut});
+        TweenMax.to(earHairR,  1, {x:-Math.cos(aM)*4, y: Math.cos(aM)*5, ease:Expo.easeOut});
+        TweenMax.to(hair,      1, {x:Math.cos(aM)*6, scaleY:1.2, transformOrigin:"center bottom", ease:Expo.easeOut});
+      }
+
+      function updateMouth(value) {
+        var len = value.length;
+        if (len === 0) {
+          if (mouthStatus !== "small") {
+            mouthStatus = "small";
+            TweenMax.to([mouthBG, mouthOL, mouthMaskP], 1, {morphSVG:mouthSmBG, shapeIndex:9, ease:Expo.easeOut});
+            TweenMax.to(tooth,  1, {x:0, y:0, ease:Expo.easeOut});
+            TweenMax.to(tongue, 1, {y:0, ease:Expo.easeOut});
+            TweenMax.to([eyeL, eyeR], 1, {scaleX:1, scaleY:1, ease:Expo.easeOut});
+          }
+        } else if (len < 6) {
+          if (mouthStatus !== "medium") {
+            mouthStatus = "medium";
+            TweenMax.to([mouthBG, mouthOL, mouthMaskP], 1, {morphSVG:mouthMdBG, shapeIndex:8, ease:Expo.easeOut});
+            TweenMax.to(tooth,  1, {x:0, y:0, ease:Expo.easeOut});
+            TweenMax.to(tongue, 1, {x:0, y:1, ease:Expo.easeOut});
+            TweenMax.to([eyeL, eyeR], 1, {scaleX:.85, scaleY:.85, ease:Expo.easeOut});
+          }
+        } else {
+          if (mouthStatus !== "large") {
+            mouthStatus = "large";
+            TweenMax.to([mouthBG, mouthOL, mouthMaskP], 1, {morphSVG:mouthLgBG, ease:Expo.easeOut});
+            TweenMax.to(tooth,  1, {x:3, y:-2, ease:Expo.easeOut});
+            TweenMax.to(tongue, 1, {y:2, ease:Expo.easeOut});
+            TweenMax.to([eyeL, eyeR], 1, {scaleX:.65, scaleY:.65, transformOrigin:"center center", ease:Expo.easeOut});
+          }
+        }
+      }
+
+      function resetFace() {
+        TweenMax.to([eyeL,eyeR], 1, {x:0,y:0, ease:Expo.easeOut});
+        TweenMax.to(nose,  1, {x:0,y:0,rotation:0, ease:Expo.easeOut});
+        TweenMax.to(mouth, 1, {x:0,y:0,rotation:0, ease:Expo.easeOut});
+        TweenMax.to(chin,  1, {x:0,y:0,scaleY:1, ease:Expo.easeOut});
+        TweenMax.to([face,eyebrow], 1, {x:0,y:0,skewX:0, ease:Expo.easeOut});
+        TweenMax.to([outerEarL,outerEarR,earHairL,earHairR,hair], 1, {x:0,y:0,scaleY:1, ease:Expo.easeOut});
+      }
+
+      function coverEyes() {
+        TweenMax.to(armL, .45, {x:-93, y:2, rotation:0, ease:Quad.easeOut});
+        TweenMax.to(armR, .45, {x:-93, y:2, rotation:0, ease:Quad.easeOut, delay:.1});
+      }
+
+      function uncoverEyes() {
+        TweenMax.to(armL, 1.35, {y:220, ease:Quad.easeOut});
+        TweenMax.to(armL, 1.35, {rotation:105, ease:Quad.easeOut, delay:.1});
+        TweenMax.to(armR, 1.35, {y:220, ease:Quad.easeOut});
+        TweenMax.to(armR, 1.35, {rotation:-105, ease:Quad.easeOut, delay:.1});
+      }
+
+      // Wire up all four inputs (login + register)
+      ['loginRoll','regRoll'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('focus', function() { trackEyes(el); });
+        el.addEventListener('input', function() { updateMouth(el.value); trackEyes(el); });
+        el.addEventListener('blur',  function() { resetFace(); });
+      });
+
+      ['loginPass','regPass'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('focus', coverEyes);
+        el.addEventListener('blur',  uncoverEyes);
+      });
+    })();
+
   </script>
 </body>
 </html>
