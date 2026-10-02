@@ -111,6 +111,18 @@ def delete_holiday(date: str, password: str, db: Session = Depends(get_db)):
     db.delete(holiday)
     db.commit()
     return {"message": "Holiday deleted"}
+# --- ADMIN: edit a holiday ---
+@app.put("/admin/holiday/{date}")
+async def edit_holiday(date: str, request: Request, db: Session = Depends(get_db)):
+    body = await request.json()
+    if body.get("password", "") != os.getenv("ADMIN_PASSWORD"):
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+    holiday = db.query(Holiday).filter(Holiday.date == date).first()
+    if not holiday:
+        raise HTTPException(status_code=404, detail="Holiday not found")
+    holiday.reason = body.get("reason", holiday.reason)
+    db.commit()
+    return {"message": "Holiday updated", "date": date, "reason": holiday.reason}
 
 # --- UPTIMEROBOT SIDE-DOOR ---
 # Handle HEAD for UptimeRobot free tier + GET for browser testing

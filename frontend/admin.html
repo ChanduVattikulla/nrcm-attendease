@@ -10,7 +10,8 @@
     h2 { color: #5B6AF0; margin-bottom: 24px; }
     input, textarea { width: 100%; padding: 10px; margin: 8px 0 16px; background: #141928; border: 1px solid #1E2740; border-radius: 8px; color: #ECF0FF; font-size: 14px; box-sizing: border-box; }
     button { background: #5B6AF0; color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
-    button.del { background: #F0504A; margin-left: 8px; padding: 6px 14px; font-size: 12px; }
+    button.del  { background: #F0504A; margin-left: 8px; padding: 6px 14px; font-size: 12px; }
+    button.edit { background: #F5A623; margin-left: 8px; padding: 6px 14px; font-size: 12px; }
     .msg { padding: 10px; border-radius: 8px; margin: 12px 0; font-size: 13px; }
     .success { background: rgba(34,208,122,0.15); color: #22D07A; border: 1px solid #22D07A; }
     .error { background: rgba(240,80,74,0.15); color: #F0504A; border: 1px solid #F0504A; }
@@ -20,7 +21,10 @@
   </style>
 </head>
 <body>
-  <h2>🔐 AttendEase Admin</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <h2 style="margin:0;">🔐 AttendEase Admin</h2>
+    <button onclick="window.location.href='https://nrcmattend.vercel.app'" style="background:#141928;border:1px solid #1E2740;font-size:13px;padding:8px 16px;">← Website</button>
+  </div>
 
   <label>Admin Password</label>
   <input type="password" id="adminPass" placeholder="Enter admin password"/>
@@ -46,10 +50,13 @@
       const data = await res.json();
       const list = document.getElementById('holidayList');
       if (!data.length) { list.innerHTML = '<p style="color:#6B7A9F">No holidays added yet.</p>'; return; }
-      list.innerHTML = [...data].sort((a, b) => a.date.localeCompare(b.date)).map(h => `
+            list.innerHTML = [...data].sort((a, b) => a.date.localeCompare(b.date)).map(h => `
         <div class="holiday-item">
           <span><strong>${h.date}</strong> — ${h.reason}</span>
-          <button class="del" onclick="deleteHoliday('${h.date}')">Delete</button>
+          <span>
+            <button class="edit" onclick="editHoliday('${h.date}','${h.reason}')">Edit</button>
+            <button class="del" onclick="deleteHoliday('${h.date}')">Delete</button>
+          </span>
         </div>
       `).join('');
     }
@@ -70,6 +77,20 @@
         msg.innerHTML = `<div class="msg success">✅ ${data.date} added successfully.</div>`;
         document.getElementById('holidayDate').value = '';
         document.getElementById('holidayReason').value = '';
+          async function editHoliday(date, currentReason) {
+      const newReason = prompt(`Edit reason for ${date}:`, currentReason);
+      if (!newReason || newReason.trim() === currentReason) return;
+      const password = document.getElementById('adminPass').value;
+      if (!password) { alert('Enter admin password first'); return; }
+      const res = await fetch(`${API}/admin/holiday/${date}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, reason: newReason.trim() })
+      });
+      const data = await res.json();
+      if (res.ok) loadHolidays();
+      else alert(data.detail);
+    }
         loadHolidays();
       } else {
         msg.innerHTML = `<div class="msg error">❌ ${data.detail}</div>`;
