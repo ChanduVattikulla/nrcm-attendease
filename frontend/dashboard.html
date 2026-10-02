@@ -1109,10 +1109,23 @@ function toggleTheme() {
       : `✓ Attendance updated: <strong>${timeStr}</strong>`;
       renderDashboard(attendanceData);
 
-      } catch(e) {
-        if (isFirstLoad) {
+            } catch(e) {
+        if (isFirstLoad && !force) {
+          // Auto-retry once after 2 seconds — silently, without showing error
           document.getElementById('loadingState').innerHTML = `
-            <p style="color:var(--absent)">❌ Failed to load attendance. Is the server running?</p>`;
+            <div style="text-align:center; padding:60px 20px;">
+              <div class="spinner"></div>
+              <p style="color:var(--subtext); margin-top:12px;">Connecting to server...</p>
+            </div>`;
+          setTimeout(() => loadAttendance(false), 2000);
+        } else if (isFirstLoad && force) {
+          document.getElementById('loadingState').innerHTML = `
+            <div style="text-align:center; padding:60px 20px;">
+              <p style="color:var(--absent); margin-bottom:16px;">❌ Could not reach server.</p>
+              <button class="btn-refresh" onclick="loadAttendance(false)" style="margin:0 auto;">
+                ↻ Try Again
+              </button>
+            </div>`;
         } else {
           document.getElementById('cacheInfo').innerHTML =
             `⚠︎ <strong>Could not reach server. Please try again.</strong>`;
