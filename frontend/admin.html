@@ -77,7 +77,13 @@
         msg.innerHTML = `<div class="msg success">✅ ${data.date} added successfully.</div>`;
         document.getElementById('holidayDate').value = '';
         document.getElementById('holidayReason').value = '';
-          async function editHoliday(date, currentReason) {
+        loadHolidays();
+      } else {
+        msg.innerHTML = `<div class="msg error">❌ ${data.detail}</div>`;
+      }
+    }
+
+    async function editHoliday(date, currentReason) {
       const newReason = prompt(`Edit reason for ${date}:`, currentReason);
       if (!newReason || newReason.trim() === currentReason) return;
       const password = document.getElementById('adminPass').value;
@@ -90,11 +96,6 @@
       const data = await res.json();
       if (res.ok) loadHolidays();
       else alert(data.detail);
-    }
-        loadHolidays();
-      } else {
-        msg.innerHTML = `<div class="msg error">❌ ${data.detail}</div>`;
-      }
     }
 
     async function deleteHoliday(date) {
