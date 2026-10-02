@@ -1193,9 +1193,26 @@
 
         renderCalendar();
       } catch(e) {
-        console.error(e);
-        document.getElementById('monthsWrapper').innerHTML = `<div style="text-align:center;padding:60px;color:var(--absent)">❌ Failed to load. Is server running?</div>`;
-      }
+    console.error(e);
+    // Auto-retry once after 2 seconds — handles transient server hiccups
+    // without showing a confusing error to the user
+    document.getElementById('monthsWrapper').innerHTML = `
+        <div style="text-align:center;padding:60px;color:var(--text-secondary)">
+            <div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+            <p>Connecting to server...</p>
+        </div>`;
+    setTimeout(async () => {
+        try {
+            await loadData();
+        } catch(e2) {
+            document.getElementById('monthsWrapper').innerHTML = `
+                <div style="text-align:center;padding:60px;">
+                    <p style="color:var(--absent);margin-bottom:16px;">❌ Could not load attendance.</p>
+                    <button onclick="loadData()" style="background:var(--accent);color:white;border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">↻ Try Again</button>
+                </div>`;
+        }
+    }, 2000);
+}
     }
 
     function renderCalendar() {
