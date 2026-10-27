@@ -1097,7 +1097,9 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const API = 'https://nrcm-attendance-api.onrender.com';
+    const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:8000'
+      : 'https://nrcm-attendance-api.onrender.com';
     const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const PERIODS = ['P1','P2','P3','P4','P5','P6'];

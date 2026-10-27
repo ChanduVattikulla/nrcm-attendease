@@ -43,7 +43,9 @@
   <div id="holidayList">Loading...</div>
 
   <script>
-    const API = 'https://nrcm-attendance-api.onrender.com';
+    const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:8000'
+      : 'https://nrcm-attendance-api.onrender.com';
 
     async function loadHolidays() {
       const res = await fetch(`${API}/holidays`);

@@ -20,3 +20,8 @@ server_log.txt
 Thumbs.db
 .vscode/
 *.swp
+
+# --- LOCAL TOOLING / GENERATED ARTIFACTS (never commit) ---
+.archify/
+.serena/
+backend/attendance.db

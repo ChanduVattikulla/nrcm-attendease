@@ -271,6 +271,57 @@
       font-weight: 500;
     }
 
+    /* COMPACT PREDICTORS — growth / per-class impact / drop */
+    .pred-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 2px 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .pred-head h4 { font-family: 'Syne', sans-serif; font-size: clamp(14px, 3.5vw, 16px); margin: 0; }
+    .pred-sub { color: var(--subtext); font-size: 12px; }
+    .Skip-result--compact { margin-top: 12px; padding: 10px 14px; font-size: 13.5px; }
+    .growth-lines { display: flex; flex-direction: column; gap: 6px; }
+    .growth-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 2px 14px;
+      flex-wrap: wrap;
+      font-size: 13.5px;
+    }
+    .growth-line > span:first-child { color: var(--subtext); flex-shrink: 0; }
+    .growth-line > span:last-child { text-align: right; font-weight: 600; margin-left: auto; }
+    .growth-line em { font-style: normal; color: var(--subtext); font-weight: 500; font-size: 11.5px; }
+    .delta-up { color: var(--present); }
+    .delta-down { color: var(--absent); }
+    .delta-flat { color: var(--subtext); }
+
+    /* ATTENDANCE DROP */
+    .drop-modes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .drop-mode-btn {
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--subtext);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .drop-mode-btn:hover { color: var(--text); border-color: var(--glass-border); }
+    .drop-mode-btn.active {
+      background: var(--glass-bg);
+      border-color: var(--accent);
+      color: var(--text);
+      box-shadow: 2px 4px 12px var(--shadow-dark), -2px -2px 8px var(--shadow-light), inset 0 1px 0 var(--glass-highlight);
+    }
+    .drop-fields { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .drop-verdict { margin-top: 8px; font-weight: 700; font-size: 13px; }
+
     /* SECTION HEADER */
     .section-header {
       background: linear-gradient(135deg, #4361ee, #3a0ca3);
@@ -751,8 +802,9 @@ font-size: clamp(24px, 7vw, 32px);
   #refreshBtn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-  }
-.Skip-controls #calcBtn {
+  }    .Skip-controls #calcBtn,
+.Skip-controls #growthBtn,
+.Skip-controls #dropBtn {
   flex: 1 1 100%;
   justify-content: center;
   text-align: center;
@@ -774,7 +826,9 @@ font-size: clamp(24px, 7vw, 32px);
   transform: translateY(0);
 }
 
-.Skip-controls #calcBtn:hover {
+.Skip-controls #calcBtn:hover,
+.Skip-controls #growthBtn:hover,
+.Skip-controls #dropBtn:hover {
  background: var(--glass-bg);
 border-color: var(--glass-border);
   box-shadow: 
@@ -784,7 +838,9 @@ border-color: var(--glass-border);
   transform: translateY(-2px);
 }
 
-.Skip-controls #calcBtn:active {
+.Skip-controls #calcBtn:active,
+.Skip-controls #growthBtn:active,
+.Skip-controls #dropBtn:active {
   transform: scale(0.97);
   box-shadow: 
     1px 2px 6px var(--shadow-dark),
@@ -970,6 +1026,66 @@ border-color: var(--glass-border);
 </div>
 <!-- END ROW -->
 
+<!-- PREDICTORS ROW -->
+<div class="skip-calendar-row" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+  <!-- GROWTH PREDICTOR -->
+  <div class="Skip-card" style="margin-bottom:0;">
+    <div class="pred-head">
+      <h4>📈 Attendance Growth</h4>
+      <span class="pred-sub">6 classes/day · All attended</span>
+    </div>
+    <div class="Skip-controls">
+      <label>Future college days</label>
+      <input type="number" id="growthDays" value="10" min="1" step="1"/>
+      <button class="btn-refresh" id="growthBtn" onclick="calcGrowth()" style="padding:8px 18px;">Project</button>
+    </div>
+    <div class="Skip-result Skip-result--compact" id="growthResult"></div>
+  </div>
+
+  <!-- PER-CLASS IMPACT -->
+  <div class="Skip-card" style="margin-bottom:0;">
+    <div class="pred-head">
+      <h4>🧮 Per-Class Impact</h4>
+      <span class="pred-sub" id="impactSub"></span>
+    </div>
+    <div class="growth-lines" id="impactGrid"></div>
+    <div class="Skip-result Skip-result--compact" id="impactNote" style="display:none;"></div>
+  </div>
+</div>
+<!-- END PREDICTORS ROW -->
+
+<!-- DROP PREDICTOR ROW -->
+<div class="skip-calendar-row" style="display:grid; grid-template-columns:1fr; gap:16px; margin-bottom:24px;">
+  <div class="Skip-card" style="margin-bottom:0;">
+    <div class="pred-head">
+      <h4>📉 Attendance Drop</h4>
+      <span class="pred-sub">Estimate your attendance after missing classes.</span>
+    </div>
+
+    <div class="drop-modes" role="group" aria-label="Drop prediction mode">
+      <button type="button" class="drop-mode-btn active" id="dropModeDaysBtn" onclick="setDropMode('days')">By college days</button>
+      <button type="button" class="drop-mode-btn" id="dropModeClassesBtn" onclick="setDropMode('classes')">By classes</button>
+    </div>
+
+    <div class="Skip-controls">
+      <div class="drop-fields" id="dropFieldsDays">
+        <label>Days absent</label>
+        <input type="number" id="dropDays" value="3" min="1" step="1" oninput="calcDrop()"/>
+        <label>Classes per day</label>
+        <input type="number" id="dropPerDay" value="6" min="1" step="1" oninput="calcDrop()"/>
+      </div>
+      <div class="drop-fields" id="dropFieldsClasses" style="display:none;">
+        <label>Classes missed</label>
+        <input type="number" id="dropMissed" value="18" min="1" step="1" oninput="calcDrop()"/>
+      </div>
+      <button class="btn-refresh" id="dropBtn" onclick="calcDrop()" style="padding:8px 18px;">Calculate</button>
+    </div>
+
+    <div class="Skip-result Skip-result--compact" id="dropResult"></div>
+  </div>
+</div>
+<!-- END DROP PREDICTOR ROW -->
+
       <!-- DATE-WISE ATTENDANCE (month tabs) -->
       <div class="attendance-container">
         <div class="section-header">
@@ -1009,7 +1125,9 @@ border-color: var(--glass-border);
   </div> 
 
   <script>
-    const API = "https://nrcm-attendance-api.onrender.com";
+    const API = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+      ? "http://localhost:8000"
+      : "https://nrcm-attendance-api.onrender.com";
     let attendanceData = null;
 
     // --- INIT ---
@@ -1018,6 +1136,7 @@ border-color: var(--glass-border);
   const roll = localStorage.getItem('roll');
   if (!token) { window.location.href = 'index.html'; return; }
   document.getElementById('rollDisplay').textContent = roll || 'Student';
+  await loadCollegeHolidays();
   await loadAttendance();
 
   // Welcome popup - shows after dashboard loads
@@ -1208,7 +1327,10 @@ setTimeout(() => {
       // Skip Calculator
       window._totalPresent = totalPresent;
       window._totalClasses = totalClasses;
+      updateImpact();
+      calcGrowth();
       calcSkips();
+      calcDrop();
 
       // Group date-wise by month
       const monthGroups = {};
@@ -1449,6 +1571,266 @@ result.innerHTML = `✓ You can skip <strong>${dayText}${connector}${classText}<
     result.innerHTML = `ⓘ You need to attend ${dayText}${connector}${classText} to reach <strong>${target}%</strong>.`;
   }
 }
+    // --- GROWTH PREDICTOR + PER-CLASS IMPACT ---
+    // 6 classes per college day — same assumption as the Skip Calculator above
+    // (classes ÷ 6) and as calendar.html's projection (projP += 6 / projT += 6).
+    const CLASSES_PER_COLLEGE_DAY = 6;
+    const MAX_GROWTH_DAYS = 3650;
+
+    // Fixed college holidays (MM-DD) — same list as calendar.html.
+    // Floating holidays (Pongal, Diwali, Ugadi …) arrive from /holidays.
+    const COLLEGE_HOLIDAYS = new Set(['01-26', '04-14', '06-02', '08-15', '10-02', '12-25']);
+
+    async function loadCollegeHolidays() {
+      try {
+        const res = await fetch(`${API}/holidays`);
+        if (!res.ok) return;
+        const data = await res.json();
+        (Array.isArray(data) ? data : []).forEach(h => {
+          if (h && typeof h.date === 'string' && h.date.length >= 7) {
+            COLLEGE_HOLIDAYS.add(h.date.slice(5)); // 'YYYY-MM-DD' -> 'MM-DD'
+          }
+        });
+      } catch (e) {
+        // silent fallback — hardcoded holidays still apply (same as calendar.html)
+      }
+    }
+
+    // College day = Mon–Sat and not a holiday (calendar.html uses the same rule)
+    function isCollegeDay(date) {
+      const mmdd = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      return date.getDay() !== 0 && !COLLEGE_HOLIDAYS.has(mmdd);
+    }
+
+    // Calendar days (starting tomorrow) needed to fit `n` college days
+    function collegeDaySpan(n) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + 1);
+      let calendarDays = 0, sundays = 0, holidays = 0, counted = 0;
+      const guard = n * 10 + 370; // hard iteration cap
+      while (counted < n && calendarDays < guard) {
+        calendarDays++;
+        if (d.getDay() === 0) sundays++;
+        else if (!isCollegeDay(d)) holidays++;
+        else counted++;
+        d.setDate(d.getDate() + 1);
+      }
+      return { calendarDays, sundays, holidays };
+    }
+
+    // Percentage-point delta with sign, rounded like the other readouts
+    function signedPp(delta) {
+      const r = Math.round(delta * 100) / 100;
+      if (r > 0) return { text: `+${r.toFixed(2)} pp`, cls: 'delta-up' };
+      if (r < 0) return { text: `${r.toFixed(2)} pp`, cls: 'delta-down' };
+      return { text: '0.00 pp', cls: 'delta-flat' };
+    }
+
+    // Same success/warning box styling the Skip Calculator uses
+    function setCalcBox(el, kind, html) {
+      if (!el) return;
+      const palette = kind === 'success'
+        ? ['var(--success-bg)', 'var(--success-border)', 'var(--success-text)']
+        : kind === 'warning'
+          ? ['var(--warning-bg)', 'var(--warning-border)', 'var(--warning-text)']
+          : ['var(--surface)', 'var(--border)', 'var(--text)'];
+      el.style.background = palette[0];
+      el.style.border = `1px solid ${palette[1]}`;
+      el.style.color = palette[2];
+      el.style.opacity = '1';
+      el.innerHTML = html;
+    }
+
+    function getAttendancePair() {
+      const present = window._totalPresent;
+      const total = window._totalClasses;
+      const valid = Number.isFinite(present) && Number.isFinite(total) &&
+        total > 0 && present >= 0 && present <= total;
+      return { present, total, valid };
+    }
+
+    // --- FEATURE A: growth over N future college days, all attended ---
+    function calcGrowth() {
+      const result = document.getElementById('growthResult');
+      if (!result) return;
+
+      const { present, total, valid } = getAttendancePair();
+      if (!valid) {
+        setCalcBox(result, 'warning', total === 0
+          ? '⚠︎ No classes recorded yet — nothing to project.'
+          : '⚠︎ Attendance data is missing or invalid — nothing to project.');
+        return;
+      }
+
+      const current = (present / total) * 100;
+
+      // Future college days: whole number within bounds
+      const rawDays = (document.getElementById('growthDays').value || '').trim();
+      const days = Number(rawDays);
+      if (rawDays === '' || !Number.isInteger(days) || days < 1 || days > MAX_GROWTH_DAYS) {
+        setCalcBox(result, 'warning', `🤔 Enter a whole number of college days from 1 to ${MAX_GROWTH_DAYS}.`);
+        return;
+      }
+
+      // Projection: 6 classes per college day, every one attended
+      const added = days * CLASSES_PER_COLLEGE_DAY;
+      const projPresent = present + added;
+      const projTotal = total + added;
+      const projected = (projPresent / projTotal) * 100;
+      const increase = signedPp(projected - current);
+
+      // College days ≠ calendar days — show the real span (Sundays & holidays skipped)
+      const span = collegeDaySpan(days);
+      const skipped = [];
+      if (span.sundays) skipped.push(`${span.sundays} Sunday${span.sundays !== 1 ? 's' : ''}`);
+      if (span.holidays) skipped.push(`${span.holidays} holiday${span.holidays !== 1 ? 's' : ''}`);
+      const spanText = `≈ ${span.calendarDays} calendar day${span.calendarDays !== 1 ? 's' : ''}` +
+        (skipped.length ? ` (skipping ${skipped.join(' + ')})` : '');
+
+      setCalcBox(result, 'success', `
+        <div class="growth-lines">
+          <div class="growth-line"><span>Current</span><span>${current.toFixed(2)}% <em>(${present}/${total})</em></span></div>
+          <div class="growth-line"><span>Projected</span><span>${projected.toFixed(2)}% <em>(${projPresent}/${projTotal})</em></span></div>
+          <div class="growth-line"><span>Increase</span><span class="${increase.cls}">${increase.text}</span></div>
+          <div class="growth-line"><span>Additional classes</span><span>+${added} classes</span></div>
+          <div class="growth-line"><span>Time span</span><span>${spanText}</span></div>
+        </div>`);
+    }
+
+    // --- FEATURE B: effect of exactly one more class ---
+    function updateImpact() {
+      const grid = document.getElementById('impactGrid');
+      const note = document.getElementById('impactNote');
+      const sub = document.getElementById('impactSub');
+      if (!grid) return;
+
+      const { present, total, valid } = getAttendancePair();
+      if (!valid) {
+        grid.innerHTML = '';
+        if (sub) sub.textContent = '';
+        setCalcBox(note, 'warning', total === 0
+          ? '⚠︎ No classes recorded yet — add attendance first.'
+          : '⚠︎ Attendance data is missing or invalid.');
+        if (note) note.style.display = 'block';
+        return;
+      }
+
+      const current = (present / total) * 100;
+      const afterPresent = ((present + 1) / (total + 1)) * 100;
+      const afterAbsent = (present / (total + 1)) * 100;
+      const dPresent = signedPp(afterPresent - current);
+      const dAbsent = signedPp(afterAbsent - current);
+
+      if (note) note.style.display = 'none';
+      if (sub) sub.textContent = `${current.toFixed(2)}% · ${present}/${total} classes`;
+      grid.innerHTML = `
+        <div class="growth-line"><span>Present</span><span>${afterPresent.toFixed(2)}% <span class="${dPresent.cls}">${dPresent.text}</span></span></div>
+        <div class="growth-line"><span>Absent</span><span>${afterAbsent.toFixed(2)}% <span class="${dAbsent.cls}">${dAbsent.text}</span></span></div>`;
+    }
+
+    // --- FEATURE C: attendance drop from planned absences ---
+    // Missed classes only grow the denominator — the classes you attended
+    // never change — the same math the Skip Calculator above uses:
+    //   current = P / T   projected = P / (T + M)
+    const MAX_DROP_DAYS = 3650;        // same ceiling as the Growth Predictor
+    const MAX_CLASSES_PER_DAY = 24;    // generous upper bound for a single college day
+    const MAX_MISSED_CLASSES = 1000000;
+    let dropMode = 'days';
+
+    // Two decimals — the same rounding every other readout on this card uses
+    function round2(n) {
+      return Math.round((n + Number.EPSILON) * 100) / 100;
+    }
+
+    function setDropMode(mode) {
+      dropMode = mode === 'classes' ? 'classes' : 'days';
+      const daysFirst = dropMode === 'days';
+
+      const daysField = document.getElementById('dropFieldsDays');
+      const classesField = document.getElementById('dropFieldsClasses');
+      if (daysField) daysField.style.display = daysFirst ? 'flex' : 'none';
+      if (classesField) classesField.style.display = daysFirst ? 'none' : 'flex';
+
+      const daysBtn = document.getElementById('dropModeDaysBtn');
+      const classesBtn = document.getElementById('dropModeClassesBtn');
+      if (daysBtn && classesBtn) {
+        if (daysFirst) { daysBtn.classList.add('active'); classesBtn.classList.remove('active'); }
+        else { daysBtn.classList.remove('active'); classesBtn.classList.add('active'); }
+      }
+      calcDrop();
+    }
+
+    // Whole number inside [min, max]; '', '-2', '3.5' and huge values all return null
+    function readDropInt(id, min, max) {
+      const raw = String((document.getElementById(id).value ?? '')).trim();
+      const n = Number(raw);
+      if (raw === '' || !Number.isFinite(n) || !Number.isInteger(n) || n < min || n > max) return null;
+      return n;
+    }
+
+    function calcDrop() {
+      const result = document.getElementById('dropResult');
+      if (!result) return;
+
+      const { present, total, valid } = getAttendancePair();
+      if (!valid) {
+        setCalcBox(result, 'warning', total === 0
+          ? '⚠︎ No classes recorded yet — nothing to project.'
+          : '⚠︎ Attendance data is missing or invalid — nothing to project.');
+        return;
+      }
+
+      let missed, modeText;
+      if (dropMode === 'days') {
+        const days = readDropInt('dropDays', 1, MAX_DROP_DAYS);
+        if (days === null) {
+          setCalcBox(result, 'warning', `🤔 Enter a whole number of college days absent from 1 to ${MAX_DROP_DAYS}.`);
+          return;
+        }
+        const perDay = readDropInt('dropPerDay', 1, MAX_CLASSES_PER_DAY);
+        if (perDay === null) {
+          setCalcBox(result, 'warning', `🤔 Enter a whole number of classes per day from 1 to ${MAX_CLASSES_PER_DAY}.`);
+          return;
+        }
+        missed = days * perDay;
+        if (missed > MAX_MISSED_CLASSES) {
+          setCalcBox(result, 'warning', `🤔 That is more than ${MAX_MISSED_CLASSES} missed classes — enter a smaller value.`);
+          return;
+        }
+        modeText = `${days} day${days !== 1 ? 's' : ''} × ${perDay}/day`;
+      } else {
+        const classes = readDropInt('dropMissed', 1, MAX_MISSED_CLASSES);
+        if (classes === null) {
+          setCalcBox(result, 'warning', `🤔 Enter a whole number of classes to miss from 1 to ${MAX_MISSED_CLASSES}.`);
+          return;
+        }
+        missed = classes;
+        modeText = 'chosen individually';
+      }
+
+      // Round the two percentages the student reads first, then take their
+      // difference, so current − projected reconciles with the printed figures.
+      const currentR = round2((present / total) * 100);
+      const projectedR = round2((present / (total + missed)) * 100);
+      const decrease = round2(currentR - projectedR);
+      const below = projectedR < 75;
+
+      const verdict = below
+        ? (currentR >= 75
+            ? `<div class="drop-verdict" style="color:var(--absent)">⚠️ Below the 75% requirement</div>`
+            : `<div class="drop-verdict" style="color:var(--absent)">⚠️ Already below 75% — this drops you further</div>`)
+        : `<div class="drop-verdict" style="color:var(--present)">✓ Stays above the 75% requirement</div>`;
+
+      setCalcBox(result, below ? 'warning' : 'success', `
+        <div class="growth-lines">
+          <div class="growth-line"><span>Current</span><span>${currentR.toFixed(2)}% <em>(${present}/${total})</em></span></div>
+          <div class="growth-line"><span>Missed classes</span><span>${missed} <em>${modeText}</em></span></div>
+          <div class="growth-line"><span>Projected</span><span>${projectedR.toFixed(2)}% <em>(${present}/${total + missed})</em></span></div>
+          <div class="growth-line"><span>Decrease</span><span class="${decrease > 0 ? 'delta-down' : 'delta-flat'}">${decrease.toFixed(2)} pp</span></div>
+        </div>${verdict}`);
+    }
+
   function animateCounter(id, start, end, duration) {
   const el = document.getElementById(id);
   if (!el) return;
