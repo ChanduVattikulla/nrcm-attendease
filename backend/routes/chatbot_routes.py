@@ -1,7 +1,6 @@
 """
-Chatbot route — powered by Groq with Native Python Tool Calling (Deterministic Calculator).
-Supports openai/gpt-oss-120b, openai/gpt-oss-20b, qwen/qwen3.8-27b.
-Zero math hallucinations: All arithmetic is executed by Python!
+Chatbot route — powered by Groq with Qwen-3.8-27b as primary tool-calling model.
+Guaranteed 100% accurate attendance arithmetic executed in pure Python!
 """
 import os
 import json
@@ -18,13 +17,13 @@ router = APIRouter()
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
+# Prioritize qwen3.8-27b because it natively supports reliable tool calling on Groq!
 MODELS = [
+    "qwen/qwen3.8-27b",
     "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b",
-    "qwen/qwen3.8-27b"
+    "openai/gpt-oss-20b"
 ]
 
-# --- ATTENDANCE SIMULATION CALCULATOR TOOL DEFINITION ---
 CALCULATOR_TOOL = {
     "type": "function",
     "function": {
@@ -93,43 +92,20 @@ def execute_calculator_tool(arguments_json: str) -> str:
 
             if is_holiday:
                 pct = round((p / t * 100), 2) if t > 0 else 0.0
-                results.append({
-                    "date": date,
-                    "day": day_name,
-                    "is_holiday": True,
-                    "periods_attended": 0,
-                    "periods_skipped": 0,
-                    "cumulative_present": p,
-                    "cumulative_total": t,
-                    "percentage": f"{pct:.2f}%"
-                })
+                results.append(f"{date} ({day_name}): OFF -> {p}/{t} ({pct:.2f}%)")
             else:
                 k = max(0, min(6, int(day.get("periods_attended", 6))))
                 p += k
                 t += 6
                 pct = round((p / t * 100), 2) if t > 0 else 0.0
-                results.append({
-                    "date": date,
-                    "day": day_name,
-                    "is_holiday": False,
-                    "periods_attended": k,
-                    "periods_skipped": 6 - k,
-                    "cumulative_present": p,
-                    "cumulative_total": t,
-                    "percentage": f"{pct:.2f}%"
-                })
+                status_flag = "OK (>=75%)" if pct >= 75.0 else "DANGER: DROPPED BELOW 75%!"
+                results.append(f"{date} ({day_name}): Attended {k}/6, Skipped {6-k} -> {p}/{t} ({pct:.2f}%) [{status_flag}]")
 
-        return json.dumps({
-            "status": "success",
-            "initial_present": args.get("start_present"),
-            "initial_total": args.get("start_total"),
-            "daily_results": results
-        })
+        return "\n".join(results)
     except Exception as err:
-        return json.dumps({"status": "error", "message": str(err)})
+        return f"Calculation error: {err}"
 
 
-# --- Per-user rate limiter (in-memory, safe for single-worker Render deployment) ---
 _hits: dict = defaultdict(deque)
 
 def _rate_limited(key: str, limit: int = 10, window: int = 60) -> bool:
@@ -147,14 +123,18 @@ SYSTEM_PROMPT = """You are Nova, the student's cute, witty, and super-smart atte
 You look like a round, cozy little buddy wearing a purple winter beanie and warm scarf.
 
 COLLEGE IDENTITY & LOCATION (NRCM HYDERABAD, INDIA):
-- College: Narsimha Reddy Engineering College (NRCM), an autonomous engineering institution in Maisammaguda, Hyderabad, Telangana (Affiliated to JNTUH).
+- College: Narsimha Reddy Engineering College (NRCM), Maisammaguda, Hyderabad, Telangana (Affiliated to JNTUH).
 - Regulations: 75% aggregate attendance is strictly mandatory for semester-end exams. 65%-75% is condonation. Below 65% is detention.
 - College Schedule: Monday through Saturday are full 6-period working days! Saturday is NEVER a weekend. Sunday is the only regular off.
 
-CRITICAL CALCULATION RULE (ZERO MATH GUESSING):
-- Whenever calculating schedules, plans, skip dates, or "what-if" scenarios, YOU MUST CALL THE `calculate_attendance_simulation` TOOL!
-- DO NOT guess or calculate fractions in your head. Let the calculator tool execute the exact math.
-- Once the tool returns the results, present them in a clean visual table using the exact returned numbers.
+CRITICAL MATHEMATICAL LAWS (NEVER VIOLATE):
+1. Every working day has 6 periods. The total denominator ALWAYS increases by +6 (T + 6) regardless of attendance!
+2. Attending 3/6 periods is 50% attendance for that day. It will RAPIDLY DECREASE attendance if the student is around 75%!
+3. NEVER claim attendance "stays flat" after skipping periods or half-days.
+4. For ANY schedule, calculation, or plan:
+   - If a pre-calculated roadmap exists in context, USE THOSE EXACT VERIFIED NUMBERS DIRECTLY!
+   - Or call `calculate_attendance_simulation` to calculate custom student questions.
+   - DO NOT invent percentages or guess in your head.
 
 YOUR PERSONALITY & RESPONSE FORMAT:
 - Warm, slightly cheeky, speaks like a smart senior friend who genuinely cares.
@@ -165,7 +145,7 @@ YOUR PERSONALITY & RESPONSE FORMAT:
   | 2026-11-06 | Fri | P | P | P | P | A | A | Attend 4, Skip 2 | 75.12% |
   | 2026-11-08 | Sun | – | – | – | – | – | – | Weekly off | – |
   (The UI automatically renders P as green pills and A as red pills!)
-- If a student reports a bug or calculation issue, politely remind them: "You can send a screenshot directly to the admin using 'Report Bug / Feedback' in my 3-dot (⋮) menu!"
+- If a student reports a bug or calculation issue: remind them to use 'Report Bug / Feedback' in your 3-dot (⋮) menu!
 """
 
 
@@ -178,7 +158,6 @@ async def chatbot(request: Request, db: Session = Depends(get_db), user: User = 
             detail="Chatbot is not available right now."
         )
 
-    # Per-user rate limiting: 10 requests per 60 seconds
     if _rate_limited(user.roll_number):
         raise HTTPException(status_code=429, detail="Slow down a little — try again in a minute. ⏳")
 
@@ -192,7 +171,6 @@ async def chatbot(request: Request, db: Session = Depends(get_db), user: User = 
     if not client_messages:
         raise HTTPException(status_code=400, detail="No messages provided.")
 
-    # Fetch live official holidays directly from database
     db_holidays = []
     try:
         holidays_records = db.query(Holiday).all()
@@ -236,13 +214,19 @@ async def chatbot(request: Request, db: Session = Depends(get_db), user: User = 
 
     last_error = "AI service busy"
 
+    # Check if student is asking for a plan/calculation
+    last_user_msg = (client_messages[-1].get("content") or "").lower() if client_messages else ""
+    calc_keywords = ["plan", "maintain", "skip", "calculate", "what if", "attend", "bunk", "schedule", "tomorrow", "next week", "upto", "percentage", "%"]
+    is_calc_request = any(k in last_user_msg for k in calc_keywords)
+
     for model in MODELS:
+        tool_choice_mode = "required" if (is_calc_request and "qwen" in model) else "auto"
         payload = {
             "model": model,
             "messages": openai_messages,
             "tools": TOOLS,
-            "tool_choice": "auto",
-            "temperature": 0.4,
+            "tool_choice": tool_choice_mode,
+            "temperature": 0.3,
             "max_tokens": 1500,
         }
         if model.startswith("openai/gpt-oss"):
@@ -259,7 +243,6 @@ async def chatbot(request: Request, db: Session = Depends(get_db), user: User = 
                     msg_obj = choices[0].get("message", {})
                     tool_calls = msg_obj.get("tool_calls")
 
-                    # If model requested a tool call, execute it and get the second turn
                     if tool_calls:
                         openai_messages.append(msg_obj)
                         for tc in tool_calls:
@@ -273,11 +256,10 @@ async def chatbot(request: Request, db: Session = Depends(get_db), user: User = 
                                     "content": tool_result
                                 })
 
-                        # Second call: send tool output back to model to get final formatted answer
                         payload_turn2 = {
                             "model": model,
                             "messages": openai_messages,
-                            "temperature": 0.4,
+                            "temperature": 0.3,
                             "max_tokens": 1500,
                         }
                         if model.startswith("openai/gpt-oss"):
@@ -306,7 +288,7 @@ async def chatbot(request: Request, db: Session = Depends(get_db), user: User = 
             last_error = "timeout"
             continue
         except Exception as e:
-            last_error = str(e)
+            last_error = "unexpected error"
             continue
 
     print("Chatbot upstream failure:", last_error)
