@@ -1353,15 +1353,18 @@
       todayStatusDescription = "Today is a fresh WORKING DAY (0/6 periods posted yet — college hasn't started or attendance not uploaded yet). Today IS plannable for all 6 periods!";
     }
 
-    // Upcoming schedule (Monday through Saturday = working days; Sunday = Off)
-    // If today is NOT fully posted, NOT Sunday, and NOT a holiday, planning starts from TODAY!
+    // DETERMINISTIC ATTENDANCE ENGINE (Pre-calculates exact cumulative math so LLM NEVER hallucinates)
     const upcoming = [];
+    let curSimP = bP;
+    let curSimT = bT;
+
     const d = new Date(today);
     if (todayAllPosted || todayIsSun || todayIsHol) {
       d.setDate(d.getDate() + 1);
     }
     const end = new Date(today);
     end.setDate(end.getDate() + 21); // 3 weeks of schedule is optimal and fast
+
     while (d <= end) {
       const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       const mmdd = iso.slice(5);
@@ -1370,27 +1373,59 @@
       const isSun = dayOfWeek === 0;
       const isHol = holidays.has ? (holidays.has(mmdd) || holidays.has(iso)) : false;
       const holReason = holidayNames[iso] || holidayNames[mmdd] || 'College Holiday';
-      const planned = pm[iso] || null;
-
       const isTodayIso = (iso === today);
-      const tagPrefix = isTodayIso ? '[TODAY] ' : '';
 
-      if (isHol && isSun) {
-        upcoming.push(`${iso} (${dayName}) — ${tagPrefix}OFFICIAL HOLIDAY & SUNDAY: ${holReason}`);
-      } else if (isHol) {
-        upcoming.push(`${iso} (${dayName}) — ${tagPrefix}OFFICIAL HOLIDAY: ${holReason}`);
-      } else if (isSun) {
-        upcoming.push(`${iso} (${dayName}) — ${tagPrefix}SUNDAY (Weekly Off)`);
+      if (isHol || isSun) {
+        const reason = isHol ? `OFFICIAL HOLIDAY: ${holReason}` : 'SUNDAY (Weekly Off)';
+        const curPctStr = curSimT > 0 ? ((curSimP / curSimT) * 100).toFixed(2) : '0.00';
+        upcoming.push({
+          iso, dayName, isOff: true, reason,
+          p: curSimP, t: curSimT, pct: curPctStr
+        });
       } else {
-        // Working Day (Monday through Saturday)
-        let note = '';
-        if (isTodayIso && postedTodayCount > 0) {
-          note = ` (Partial: ${postedTodayCount}/6 periods posted)`;
+        // Working Day: 6 periods total (+6 to denominator)
+        // If student is currently below 75%, they must attend all 6 to climb safely.
+        // If student is at/above 75%, min_k is the minimum periods to attend to NOT drop below 75%.
+        const nextT = curSimT + 6;
+        const minK = Math.max(0, Math.min(6, Math.ceil(0.75 * nextT - curSimP)));
+        let recommendedK = minK;
+        if ((curSimP / curSimT) * 100 < 75.0) {
+          recommendedK = 6; // Recover first
+        } else if (recommendedK < 4) {
+          recommendedK = Math.min(4, 6); // Keep safe buffer
         }
-        upcoming.push(`${iso} (${dayName}) — ${tagPrefix}WORKING DAY (6 periods)${note}${planned ? ' [Planned: ' + planned + ']' : ''}`);
+
+        // Apply recommended periods
+        curSimP += recommendedK;
+        curSimT = nextT;
+        const newPctStr = ((curSimP / curSimT) * 100).toFixed(2);
+
+        // Build period pills: P for recommendedK, A for remainder
+        const pArray = [];
+        for (let pIdx = 1; pIdx <= 6; pIdx++) {
+          pArray.push(pIdx <= recommendedK ? 'P' : 'A');
+        }
+
+        upcoming.push({
+          iso, dayName, isOff: false,
+          k: recommendedK,
+          skip: 6 - recommendedK,
+          pArray,
+          p: curSimP, t: curSimT, pct: newPctStr,
+          isToday: isTodayIso
+        });
       }
       d.setDate(d.getDate() + 1);
     }
+
+    const precomputedScheduleTable = upcoming.map(item => {
+      if (item.isOff) {
+        return `| ${item.iso} | ${item.dayName} | – | – | – | – | – | – | ${item.reason} | ${item.pct}% |`;
+      }
+      const p = item.pArray;
+      const action = item.skip === 0 ? 'Attend all 6' : `Attend ${item.k}, Skip ${item.skip}`;
+      return `| ${item.iso} | ${item.dayName} | ${p[0]} | ${p[1]} | ${p[2]} | ${p[3]} | ${p[4]} | ${p[5]} | ${action} | ${item.pct}% |`;
+    }).join('\n');
 
     // Recent past days attendance (from datewise or portalPeriodMap)
     let pastDaysList = [];
@@ -1471,9 +1506,15 @@ ${pastDaysList.length > 0 ? pastDaysList.join('\n') : 'No recent period logs'}
 3. WEEKLY OFF: Only SUNDAY is weekly off.
 4. OFFICIAL HOLIDAYS: Only days explicitly marked with "OFFICIAL HOLIDAY" below are closed.
 
-=== UPCOMING DAYS SCHEDULE ===
-${upcoming.slice(0, 45).join('\n')}
-${upcoming.length > 45 ? `... and ${upcoming.length - 45} more working days` : ''}`.trim();
+=== VERIFIED ACCURATE ATTENDANCE ROADMAP (PRE-CALCULATED BY APP ENGINE) ===
+You DO NOT need to calculate fractions in your head. The exact cumulative math is pre-calculated below:
+| Date | Day | P1 | P2 | P3 | P4 | P5 | P6 | Action | New % |
+|---|---|---|---|---|---|---|---|---|---|
+${precomputedScheduleTable}
+
+INSTRUCTION TO NOVA:
+When the student asks for a plan, schedule, or how to maintain 75%, USE THE PRE-CALCULATED TABLE ABOVE DIRECTLY.
+DO NOT recalculate or invent different percentages. The table already accounts for every working day adding +6 to total classes.`.trim();
   }
 
   // ── SEND MESSAGE ──
