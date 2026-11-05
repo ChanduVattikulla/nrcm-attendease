@@ -42,3 +42,15 @@ class Holiday(Base):
     date = Column(String, unique=True, nullable=False)  # format: YYYY-MM-DD
     reason = Column(String, nullable=False)
     created_at = Column(DateTime, default=func.now())
+
+# --- FEEDBACK / BUG REPORT TABLE ---
+class Feedback(Base):
+    __tablename__ = "feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    roll_number = Column(String, index=True, nullable=True)
+    category = Column(String, default="Bug", nullable=True)
+    message = Column(Text, nullable=False)
+    screenshot_base64 = Column(Text, nullable=True)
+    metadata_info = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now())

@@ -1012,12 +1012,49 @@ border-color: var(--glass-border);
     const API = "https://nrcm-attendance-api.onrender.com";
     let attendanceData = null;
 
+    const MANDATORY_HOLIDAYS = new Set([
+      '01-26', // Republic Day
+      '04-14', // Dr. B.R. Ambedkar Jayanti
+      '06-02', // Telangana State Formation Day
+      '08-15', // Independence Day
+      '10-02', // Gandhi Jayanti
+      '12-25', // Christmas
+    ]);
+
+    const HOLIDAY_NAMES = {
+      '01-26': 'Republic Day',
+      '04-14': 'Dr. B.R. Ambedkar Jayanti',
+      '06-02': 'Telangana State Formation Day',
+      '08-15': 'Independence Day',
+      '10-02': 'Gandhi Jayanti',
+      '12-25': 'Christmas'
+    };
+
+    async function loadHolidays() {
+      try {
+        const res = await fetch(`${API}/holidays`);
+        if (res.ok) {
+          const data = await res.json();
+          data.forEach(h => {
+            if (h && h.date) {
+              MANDATORY_HOLIDAYS.add(h.date.slice(5));
+              MANDATORY_HOLIDAYS.add(h.date);
+              HOLIDAY_NAMES[h.date.slice(5)] = h.reason;
+              HOLIDAY_NAMES[h.date] = h.reason;
+            }
+          });
+        }
+      } catch (_) {}
+    }
+
     // --- INIT ---
     window.onload = async function() {
   const token = localStorage.getItem('token');
   const roll = localStorage.getItem('roll');
   if (!token) { window.location.href = 'index.html'; return; }
   document.getElementById('rollDisplay').textContent = roll || 'Student';
+  loadHolidays();
+
   await loadAttendance();
 
   // Welcome popup - shows after dashboard loads
@@ -1155,6 +1192,48 @@ function toggleTheme() {
       const totalClasses = parseInt(sem.total_classes) || 0;
       const pct = sem.overall_percentage || '0%';
       const pctNum = parseFloat(pct);
+
+      // Extract portal period map and recent days
+      const portalPeriodMap = {};
+      (datewise || []).forEach(record => {
+        const dStr = (record.date || '').split(' ')[0];
+        const parts = dStr.split('-');
+        if (parts.length === 3) {
+          const iso = parts[2] + '-' + parts[1] + '-' + parts[0];
+          portalPeriodMap[iso] = record.periods || {};
+        }
+      });
+
+      const recentDays = [...(datewise || [])].sort((a, b) => {
+        const da = (a.date || '').split(' ')[0].split('-').reverse().join('-');
+        const db = (b.date || '').split(' ')[0].split('-').reverse().join('-');
+        return db.localeCompare(da);
+      }).slice(0, 8);
+
+            const HOLIDAY_NAMES = {
+        '01-26': 'Republic Day',
+        '04-14': 'Dr. B.R. Ambedkar Jayanti',
+        '06-02': 'Telangana State Formation Day',
+        '08-15': 'Independence Day',
+        '10-02': 'Gandhi Jayanti',
+        '12-25': 'Christmas'
+      };
+
+      window.getAttendanceSnapshot = () => ({
+        roll: localStorage.getItem('roll') || document.getElementById('rollDisplay')?.textContent?.trim() || 'Student',
+        baselinePresent: totalPresent,
+        baselineTotal: totalClasses,
+        overallPercentage: pct,
+        monthlySummary: monthly || [],
+        recentDays: recentDays,
+        planMap: JSON.parse(localStorage.getItem('nrcm_plan_map') || '{}'),
+        periodPlan: {},
+        portalPeriodMap: portalPeriodMap,
+        todayISO: new Date().toISOString().slice(0, 10),
+        holidays: MANDATORY_HOLIDAYS,
+        holidayNames: HOLIDAY_NAMES,
+        periods: ['P1','P2','P3','P4','P5','P6']
+      });
 
       document.getElementById('semesterSummary').innerHTML = `
   <div class="stat-card">
@@ -1494,5 +1573,6 @@ function animatePct(id, start, end, duration) {
   } catch { return ''; }
 }
   </script>
+<script src="chatbot.js"></script>
 </body>
 </html>

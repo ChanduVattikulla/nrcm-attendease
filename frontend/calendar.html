@@ -1097,7 +1097,9 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const API = 'https://nrcm-attendance-api.onrender.com';
+    const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+      ? 'http://127.0.0.1:8000'
+      : 'https://nrcm-attendance-api.onrender.com';
     const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const PERIODS = ['P1','P2','P3','P4','P5','P6'];
@@ -1190,6 +1192,28 @@
         const plm = document.getElementById('navProjectedMobile');
         if (blm) blm.textContent = bPct + '%';
         if (plm) plm.textContent = bPct + '%';
+
+        const recentDays = [...(result.data.date_wise_attendance || [])].sort((a, b) => {
+          const da = (a.date || '').split(' ')[0].split('-').reverse().join('-');
+          const db = (b.date || '').split(' ')[0].split('-').reverse().join('-');
+          return db.localeCompare(da);
+        }).slice(0, 8);
+
+        window.getAttendanceSnapshot = () => ({
+          roll: localStorage.getItem('roll') || 'Student',
+          baselinePresent,
+          baselineTotal,
+          overallPercentage: bPct + '%',
+          monthlySummary: result.data.monthly_summary || [],
+          recentDays: recentDays,
+          planMap,
+          periodPlan,
+          portalPeriodMap,
+          todayISO,
+          holidays: MANDATORY_HOLIDAYS,
+          holidayNames: HOLIDAY_NAMES,
+          periods: PERIODS
+        });
 
         renderCalendar();
       } catch(e) {
@@ -2111,5 +2135,22 @@
     }
 
   </script>
+<script src="chatbot.js">
+window.getPlannerState = () => {
+    try {
+        return {
+            baselinePresent: typeof baselinePresent !== 'undefined' ? baselinePresent : 0,
+            baselineTotal: typeof baselineTotal !== 'undefined' ? baselineTotal : 0,
+            todayISO: typeof todayISO !== 'undefined' ? todayISO : '',
+            planMap: typeof planMap !== 'undefined' ? planMap : {},
+            periodPlan: typeof periodPlan !== 'undefined' ? periodPlan : {},
+            portalPeriodMap: typeof portalPeriodMap !== 'undefined' ? portalPeriodMap : {},
+            PERIODS: typeof PERIODS !== 'undefined' ? PERIODS : ['P1','P2','P3','P4','P5','P6'],
+            MANDATORY_HOLIDAYS: typeof MANDATORY_HOLIDAYS !== 'undefined' ? MANDATORY_HOLIDAYS : new Set(),
+            HOLIDAY_NAMES: typeof HOLIDAY_NAMES !== 'undefined' ? HOLIDAY_NAMES : {}
+        };
+    } catch(e) { return null; }
+};
+</script>
 </body>
 </html>

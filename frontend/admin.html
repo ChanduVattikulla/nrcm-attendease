@@ -42,8 +42,20 @@
   <h3 style="margin-bottom:16px;">Existing Holidays</h3>
   <div id="holidayList">Loading...</div>
 
+  
+  <hr/>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <h3 style="margin:0;">🐛 Student Bug Reports & Feedback</h3>
+    <button onclick="loadFeedback()" style="background:#141928;border:1px solid #1E2740;font-size:12px;padding:6px 12px;">Refresh Reports</button>
+  </div>
+  <div id="feedbackList">Enter admin password above and click "Refresh Reports".</div>
+
   <script>
-    const API = 'https://nrcm-attendance-api.onrender.com';
+    const API = window.API || (
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+        ? 'http://127.0.0.1:8000'
+        : 'https://nrcm-attendance-api.onrender.com'
+    );
 
     async function loadHolidays() {
       const res = await fetch(`${API}/holidays`);
@@ -106,6 +118,55 @@
       const data = await res.json();
       if (res.ok) loadHolidays();
       else alert(data.detail);
+    }
+
+    
+    async function loadFeedback() {
+      const password = document.getElementById('adminPass').value;
+      const list = document.getElementById('feedbackList');
+      if (!password) { list.innerHTML = '<p style="color:#F0504A">Enter admin password above to view reports.</p>'; return; }
+      list.innerHTML = '<p style="color:#6B7A9F">Loading student reports...</p>';
+      try {
+        const res = await fetch(`${API}/admin/feedback?password=${encodeURIComponent(password)}`);
+        const data = await res.json();
+        if (!res.ok) { list.innerHTML = `<p style="color:#F0504A">Error: ${data.detail || 'Could not load'}</p>`; return; }
+        if (!data.length) { list.innerHTML = '<p style="color:#22D07A">No feedback or bug reports submitted yet! 🎉</p>'; return; }
+        list.innerHTML = data.map(item => `
+          <div style="background:#141928;border:1px solid #1E2740;border-radius:10px;padding:14px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-weight:700;color:#5B6AF0;">${item.category || 'Bug'} • Roll: ${item.roll_number || 'Anonymous'}</span>
+              <span style="font-size:11px;color:#6B7A9F;">${item.created_at || ''}</span>
+            </div>
+            <p style="margin:8px 0;font-size:13px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(item.message)}</p>
+            ${item.screenshot_base64 ? `
+              <div style="margin:10px 0;">
+                <a href="${item.screenshot_base64}" target="_blank" style="color:#22D07A;font-size:12px;text-decoration:underline;">📷 View Attached Screenshot</a>
+                <div style="margin-top:6px;"><img src="${item.screenshot_base64}" style="max-width:100%;max-height:220px;border-radius:6px;border:1px solid #1E2740;" /></div>
+              </div>` : ''}
+            ${item.metadata_info ? `<div style="font-size:11px;color:#6B7A9F;background:#0E1320;padding:6px 10px;border-radius:6px;margin-top:8px;"><code>${escapeHtml(item.metadata_info)}</code></div>` : ''}
+            <div style="text-align:right;margin-top:8px;">
+              <button class="del" onclick="deleteFeedback(${item.id})">Delete Report</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        list.innerHTML = `<p style="color:#F0504A">Network error loading feedback.</p>`;
+      }
+    }
+
+    async function deleteFeedback(id) {
+      const password = document.getElementById('adminPass').value;
+      if (!password) { alert('Enter admin password first'); return; }
+      if (!confirm(`Delete report #${id}?`)) return;
+      const res = await fetch(`${API}/admin/feedback/${id}?password=${encodeURIComponent(password)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) loadFeedback();
+      else alert(data.detail);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
 
     loadHolidays();

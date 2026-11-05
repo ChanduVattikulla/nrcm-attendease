@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from database import engine, Base
-from routes import auth_routes, attendance_routes
+from routes import auth_routes, attendance_routes, chatbot_routes
 from dotenv import load_dotenv
 
 # --- RATE LIMITING IMPORTS ---
@@ -13,7 +13,7 @@ from slowapi.errors import RateLimitExceeded
 #---IMPORTS FOR ADMIN PANEL---
 from sqlalchemy.orm import Session
 from fastapi import Depends
-from models import Holiday
+from models import Holiday, Feedback
 from database import get_db
 
 load_dotenv()
@@ -67,13 +67,14 @@ app.add_middleware(
 # Connect our routes
 app.include_router(auth_routes.router, tags=["Auth"])
 app.include_router(attendance_routes.router, tags=["Attendance"])
+app.include_router(chatbot_routes.router, tags=["Chatbot"])
 
 # Test if server is running
 @app.get("/")
 def root():
     return {"message": "NRCM Attendance Tracker API is running!"}
 
-#from models import Holiday
+#from models import Holiday, Feedback
 
 # --- PUBLIC: get all holidays (used by calendar.html) ---
 @app.get("/holidays")
@@ -123,6 +124,64 @@ async def edit_holiday(date: str, request: Request, db: Session = Depends(get_db
     holiday.reason = body.get("reason", holiday.reason)
     db.commit()
     return {"message": "Holiday updated", "date": date, "reason": holiday.reason}
+
+
+# --- STUDENT: SUBMIT FEEDBACK / BUG REPORT ---
+@app.post("/feedback")
+@limiter.limit("5/minute")
+async def submit_feedback(request: Request, db: Session = Depends(get_db)):
+    body = await request.json()
+    message = (body.get("message") or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Message is required.")
+    
+    roll_number = (body.get("roll_number") or "").strip() or None
+    category = (body.get("category") or "Bug").strip()
+    screenshot_base64 = body.get("screenshot_base64")
+    metadata_info = str(body.get("metadata") or "")[:2000]
+
+    fb = Feedback(
+        roll_number=roll_number,
+        category=category,
+        message=message,
+        screenshot_base64=screenshot_base64,
+        metadata_info=metadata_info
+    )
+    db.add(fb)
+    db.commit()
+    db.refresh(fb)
+    return {"message": "Thank you! Your report has been submitted to the admin.", "id": fb.id}
+
+# --- ADMIN: GET ALL FEEDBACK ---
+@app.get("/admin/feedback")
+def get_all_feedback(password: str, db: Session = Depends(get_db)):
+    if password != os.getenv("ADMIN_PASSWORD"):
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+    items = db.query(Feedback).order_by(Feedback.id.desc()).limit(50).all()
+    return [
+        {
+            "id": item.id,
+            "roll_number": item.roll_number,
+            "category": item.category,
+            "message": item.message,
+            "screenshot_base64": item.screenshot_base64,
+            "metadata_info": item.metadata_info,
+            "created_at": str(item.created_at) if item.created_at else None
+        }
+        for item in items
+    ]
+
+# --- ADMIN: DELETE FEEDBACK ---
+@app.delete("/admin/feedback/{feedback_id}")
+def delete_feedback(feedback_id: int, password: str, db: Session = Depends(get_db)):
+    if password != os.getenv("ADMIN_PASSWORD"):
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+    item = db.query(Feedback).filter(Feedback.id == feedback_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+    db.delete(item)
+    db.commit()
+    return {"message": "Feedback deleted successfully"}
 
 # --- UPTIMEROBOT SIDE-DOOR ---
 # Handle HEAD for UptimeRobot free tier + GET for browser testing
